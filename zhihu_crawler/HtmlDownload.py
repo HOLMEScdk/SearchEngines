@@ -50,16 +50,17 @@ class HtmlDownload(object):
         cnt = 0
         total_page = 1
         total_follower = {}
+        total_follower['urlToken'] = urlToken
+        attr = phrase
+        table = "follower_info" if phrase == 'followers' else 'following_info'
         phrase += '?'
         try:
-            if total_follower.get(urlToken) is None:
-                total_follower[urlToken] = []
+            if total_follower.get(attr) is None:
+                total_follower[attr] = []
             while cnt < total_page:
                 cnt += 1
                 pages["page"] += 1
-                data, parse_page = self.download(urlToken, phrase, pages)
-                if parse_page is None:
-                    break
+                data, parse_page = self.download(urlToken, phrase, pages)  # 拼接url
                 data = list(data['entities']['users'])
                 for each in data:  # 拿到每一页的用户id
                     if each is None or each is False:
@@ -67,7 +68,10 @@ class HtmlDownload(object):
                     if each == urlToken:
                         continue
                     DataManager.add_waiting_url(each)  # 增加follower 到等待队列中
-                    total_follower[urlToken].append(each)
+                    total_follower[attr].append(each)
+                if cnt % 1000 == 0:
+                    DataManager.mongo_output_data(table, total_follower, attr)
+                    total_follower[attr].clear()
 
                 list_page = parse_page.find_all('button',
                                      class_='Button PaginationButton Button--plain')  # 找到所有的跳转页button 获得最后一个值
@@ -75,12 +79,13 @@ class HtmlDownload(object):
                     digital_button = str(list_page[-1])
                     pattern = re.compile('<[^>]+>')
                     total_page = int(pattern.sub("", digital_button))
-                else:
-                    general.logger.info("%s Followers/Following 全部添加进redis中" % urlToken)
-                    break
+            if len(total_follower[attr]) > 0:
+                DataManager.mongo_output_data(table, total_follower, attr)
+                total_follower[attr].clear()
         except Exception as e:
-            general.logger.info("%e 增加用户列表出现异常" % e)
-        return total_follower
+            general.logger.info("%e 增加用户列表出现异常 用户%s" % (e, urlToken))
+            return False
+        return True
 
     def html_parse(self, html):
         s = BS(html, 'lxml')

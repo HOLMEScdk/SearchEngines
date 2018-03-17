@@ -10,7 +10,7 @@ from urllib import parse
 import http.cookiejar
 import socket
 from zhihu_crawler import general
-# 暂时无用
+
 
 class Craweler:
     timeout = 60

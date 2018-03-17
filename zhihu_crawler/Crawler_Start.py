@@ -62,27 +62,29 @@ def get_new_person_info(crawl, urlToken):
     person = {}
     try:
         person = store_mongo_person_info(urlToken, user)
+        if person is False:  # 不用再次访问他的列表了
+            return person
     except Exception as e:
         general.logger.warn("%s 获取个人信息出现异常\n" % e)
     # 暂未解决的性能问题 调度上不好控制 需要爬取两次所有用户的following follower
     try:
          store_mongo_person_follower(urlToken)
          store_mongo_person_following(urlToken)
+         general.logger.info("%s Followers/Following 全部添加进redis中" % urlToken)
     except Exception as e:
         general.logger.warn("%s 获取个人关注列表出现异常\n" % e)
     return person
 
 
 def store_mongo_person_follower(urlToken):
-    if DataManager.mongo_search_data('follower_info',urlToken) is False:
-        follower_list = html_download.download_follower(urlToken, 'followers')
-        DataManager.mongo_output_data('follower_info', follower_list)
+    if DataManager.mongo_search_data('follower_info', urlToken) is False:
+       html_download.download_follower(urlToken, 'followers')
+
 
 
 def store_mongo_person_following(urlToken):
-    if DataManager.mongo_search_data('following_info',urlToken) is False:
-        follower_list = html_download.download_follower(urlToken, 'following')
-        DataManager.mongo_output_data('following_info', follower_list)
+    if DataManager.mongo_search_data('following_info', urlToken) is False:
+        html_download.download_follower(urlToken, 'following')
 '''
 存储个人信息 及 其following/followers
 '''
@@ -94,74 +96,80 @@ def store_mongo_person_info(urlToken, user):
     person['urlToken'] = urlToken
     person['userType'] = user['userType']
     # 追加个人信息
-    # 用户的headline
-    if user['headline'] is not None:
-        person['headline'] = user['headline']
-    # 个人简介
-    if user['description'] is not None:
-        person['description'] = user['description']
-    # 教育经历
-    # person['education'] = user['educations']
-    # user['educations'][0]['major']['name']
-    # user['educations'][0]['school']['name']
-    # 职业经历
-    # user['employments'][0]['company']['name']
-    # user['employments'][0]['job']['name']
-    # 所在行业
-    # user['business']['name']  # 有些人没有这个business
+    # badge
+    person['badge'] = []
+    for each in user['badge']:
+        topics = []
+        for top in each['topics']:
+            topics.append(top['name'])
+        person['badge'].append({'description':each['description'], 'topics':topics})
+    # 用户的headline 有
+    person['headline'] = user['headline']
+    # 个人简介 有
+    person['description'] = user['description']
+    # 教育经历 有
+    person['educations'] = []
+    for each in user['educations']:
+        person['educations'].append({'major': each['major']['name'] if each.get('major') is not None else "",
+                                     'school': {'name': each['school']['name'] if each.get('school') is not None else "" ,
+                                                'photo_url': each['school']['avatarUrl'] if each.get('school') is not None else ""}})
+
+    # 职业经历 有
+    person['employments'] = []
+    for each in user['employments']:
+        person['employments'].append({'company':{'name':each['company']['name'] if each.get('company') is not None else "",
+                                                 'photo_url':each['company']['avatarUrl'] if each.get('company') is not None else ""},
+                                      'job': each['job']['name'] if each.get('job') is not None else ""})
+    # 居住地 有
+    person['locations'] = []
+    for each in user['locations']:
+        person['locations'].append({'name': each['name']})
+    # 所在行业 无
+    person['business'] = []
+    if user.get('business') is not None:
+        li = []
+        if type(user['business']) is dict:
+            li.append(user['business'])
+        else:
+            li = user['business']
+        for each in li:
+            person['business'].append({'name': each['name']})
+
     # 文章被收藏数
-    if user['favoritedCount'] is not None:
-        person['favoritedCount'] = user['favoritedCount']
+    person['favoritedCount'] = user['favoritedCount']
     # 回答数量
-    if user['answerCount'] is not None:
-        person['answerCount'] = user['answerCount']
+    person['answerCount'] = user['answerCount']
     # 提问数
-    if user['questionCount'] is not None:
-        person['questionCount'] = user['questionCount']
+    person['questionCount'] = user['questionCount']
     # 文章数
-    if user['articlesCount'] is not None:
-       person['articlesCount'] = user['articlesCount']
+    person['articlesCount'] = user['articlesCount']
     # 专栏数
-    if user['columnsCount'] is not None:
-        person['columnsCount'] = user['columnsCount']
+    person['columnsCount'] = user['columnsCount']
     # 粉丝
-    if user['followerCount'] is not None:
-        person['followerCount'] = user['followerCount']
+    person['followerCount'] = user['followerCount']
     # 关注的专栏数
-    if user['followingColumnsCount'] is not None:
-        person['followingColumnsCount'] = user['followingColumnsCount']
+    person['followingColumnsCount'] = user['followingColumnsCount']
     # 他关注的个数
-    if user['followingCount'] is not None:
-        person['followingCount'] = user['followingCount']
+    person['followingCount'] = user['followingCount']
     # 关注的收藏夹
-    if user['followingFavlistsCount'] is not None:
-        person['followingFavlistsCount'] = user['followingFavlistsCount']
+    person['followingFavlistsCount'] = user['followingFavlistsCount']
     # 关注的问题
-    if user['followingQuestionCount'] is not None:
-        person['followingQuestionCount'] = user['followingQuestionCount']
+    person['followingQuestionCount'] = user['followingQuestionCount']
     # 关注话题
-    if user['followingTopicCount'] is not None:
-        person['followingTopicCount'] = user['followingTopicCount']
+    person['followingTopicCount'] = user['followingTopicCount']
     # 举办的live
-    if user['hostedLiveCount'] is not None:
-        person['hostedLiveCount'] = user['hostedLiveCount']
+    person['hostedLiveCount'] = user['hostedLiveCount']
     # 参加的live
-    if user['participatedLiveCount'] is not None:
-        person['participatedLiveCount'] = user['participatedLiveCount']
-    # 居住地
-    # user['locations'][0]['name']
+    person['participatedLiveCount'] = user['participatedLiveCount']
     # 参与公共编辑数
-    if user['logsCount'] is not None:
-        person['logsCount'] = user['logsCount']
+    person['logsCount'] = user['logsCount']
     # 获得点赞数
-    if user['voteupCount'] is not None:
-        person['voteupCount'] = user['voteupCount']
+    person['voteupCount'] = user['voteupCount']
     # 感谢数
-    if user['thankedCount'] is not None:
-        person['thankedCount'] = user['thankedCount']
+    person['thankedCount'] = user['thankedCount']
     # -1 无性别 0 woman 1 man
-    if user['gender'] is not None:
-        person['gender'] = user['gender']
+    person['gender'] = user['gender']
+    person['photo'] = user['avatarUrl']
     DataManager.mongo_output_data('person_table', person)
     return person
 

@@ -50,11 +50,18 @@ def mongo_search_data(table, urlToken):  # judge whether store in mongo
     return False
 
 
-def mongo_output_data(table, person):  # store in mongo
+def mongo_output_data(table, person, extra_field=None):  # store in mongo 如果有更新字段要传入额外内容
     person_collection = mongo_crawler[table]
     try:
-        person_collection.insert(person)
+        if mongo_search_data(table, person['urlToken']) is False:  # count == 0
+            person_collection.insert(person)
+        else:
+            if extra_field is not None:
+                person_collection.update(
+                    {'urlToken': person['urlToken']},
+                    {'$addToSet': {extra_field: {'$each': person[extra_field]}}}
+                )  # 追加插入不重复的元素
     except Exception as e:
         print(e, " 数据库插入失败")
-        general.logger.error(e, " 数据库插入失败")
+        general.logger.error( "%s 数据库插入失败"% e)
     return True
