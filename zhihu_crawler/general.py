@@ -5,17 +5,16 @@
 import logging.handlers
 
 # General setting
-process_waitting = 5              		# 进程等待时间
-set_socket_timeout = 60          		# socket 请求超时时间
+process_waitting = 20              		# 进程等待时间
+set_socket_timeout = 120          		# socket 请求超时时间
 Max_Limit = 10              		    # 尝试次数
-per_page = 20               		    # 每页显示的最大用户数量 follower following
-list_max_process_num = 10        	    # 关注列表抓取进程最大进程数
-person_max_process_num = 50        	    # 信息抓取进程最大进程数
+max_process_num = 6        	        # 抓取最大进程数
 waiting_url = 'waiting_url'     		# 待抓取节点集合
 zset_success_url = 'zset_success_url'   # url成功有序集合
 set_success_url = 'set_success_url' 	# url成功集合
-faile_url = 'failed_url'                # 信息抓取失败节点集合
-failed_set = 'failed_url_set'           # 列表抓取失败节点集合
+failed_url = 'failed_url'                # 信息抓取失败节点集合
+failed_follower = 'failed_follower_set'     # 关注列表抓取失败点
+failed_following = 'failed_following_set'
 host = 'https://www.zhihu.com'		    # 主页面
 
 # DatBase setting

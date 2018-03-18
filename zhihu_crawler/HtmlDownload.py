@@ -10,6 +10,7 @@ import socket
 import json
 from bs4 import BeautifulSoup as BS
 import re
+import time
 socket.setdefaulttimeout(general.set_socket_timeout)
 
 
@@ -31,47 +32,54 @@ class HtmlDownload(object):
             return False
         url ='%s/people/%s/%s'% (general.host, urlToken, page)
         try:
-            if postdata != None:  # 需要encode
-                postdata = parse.urlencode(postdata)
-                url = '%s/people/%s/%s%s' % (general.host, urlToken, page, postdata)
+            if postdata is not None:  # 需要encode
+                postdata = str(parse.urlencode(postdata))
+                url = '%s/people/%s/%s%s' % (general.host, urlToken, page, postdata,)
             req = request.Request(url, headers=self.headers)
             html = request.urlopen(req).read()
             htm = str(html, encoding="utf-8")
             data, parse_page = self.html_parse(htm)
         except Exception as e:
-            general.logger.warn("%s 下载html异常\n" % e)
-            return
+            general.logger.warn("%s 下载html异常 用户 \n" % (e, urlToken))
+            return {}, None
         return data, parse_page
 
     def download_follower(self, urlToken, phrase):
-        pages = {}
+        pages = dict()
         pages["page"] = 0
         # 开头这样做为了检查有无用户follower
         cnt = 0
         total_page = 1
-        total_follower = {}
+        total_follower = dict()
         total_follower['urlToken'] = urlToken
         attr = phrase
         table = "follower_info" if phrase == 'followers' else 'following_info'
         phrase += '?'
         try:
-            if total_follower.get(attr) is None:
-                total_follower[attr] = []
+            total_follower[attr] = []
             while cnt < total_page:
                 cnt += 1
                 pages["page"] += 1
                 data, parse_page = self.download(urlToken, phrase, pages)  # 拼接url
+                time.sleep(0.5)
+                if parse_page is None:
+                    time.sleep(1)
+                    pages["page"] += 1
+                    cnt -= 1     # 恢复数据
+                    continue
                 data = list(data['entities']['users'])
                 for each in data:  # 拿到每一页的用户id
-                    if each is None or each is False:
-                        break
+                    # if each is None or each is False:
+                    #     break
                     if each == urlToken:
                         continue
+                    # print(each)
                     DataManager.add_waiting_url(each)  # 增加follower 到等待队列中
                     total_follower[attr].append(each)
-                if cnt % 1000 == 0:
+                if cnt % 100 == 0:
                     DataManager.mongo_output_data(table, total_follower, attr)
                     total_follower[attr].clear()
+                    general.logger.warn("用户列查询到第%d页%s" % cnt)
 
                 list_page = parse_page.find_all('button',
                                      class_='Button PaginationButton Button--plain')  # 找到所有的跳转页button 获得最后一个值
@@ -83,7 +91,7 @@ class HtmlDownload(object):
                 DataManager.mongo_output_data(table, total_follower, attr)
                 total_follower[attr].clear()
         except Exception as e:
-            general.logger.info("%e 增加用户列表出现异常 用户%s" % (e, urlToken))
+            general.logger.warn("%e 增加用户列表出现异常 用户%s" % (e, urlToken))
             return False
         return True
 
@@ -96,5 +104,6 @@ class HtmlDownload(object):
 
 if __name__ == '__main__':
     ht = HtmlDownload()
-    # ans = ht.download_follower("li-guan-nan-79",'following')
-    # print(len(ans['li-guan-nan-79']))
+    # url = "rong-ma-ma-70"
+    # ans = ht.download_follower(url, 'following')
+    # print(ans)

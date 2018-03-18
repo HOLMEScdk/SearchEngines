@@ -4,19 +4,23 @@
 from zhihu_crawler import general
 import pymongo
 import redis
-
+from datetime import  datetime
 # mongo
 mg_client = pymongo.MongoClient(general.mongo_host, general.mongo_port)
 mongo_crawler = mg_client.zhihu_crawler
 
 # Redis
 r0_waitting = redis.Redis(host=general.redis_host, port=general.redis_port, db=0)
-r1_failed = redis.Redis(host=general.redis_host, port=general.redis_port, db=1)
+# fail 也是r0
 '''
 两个数据结构 一个set集合去重复
 一个zset 可以作为之后分数查询的内容
 '''
 r2_succeed = redis.Redis(host=general.redis_host, port=general.redis_port, db=2)
+
+
+def add_failed_url(table,url):
+    r0_waitting.sadd(table, url)
 
 
 def empty_waiting_url():
@@ -54,6 +58,7 @@ def mongo_output_data(table, person, extra_field=None):  # store in mongo 如果
     person_collection = mongo_crawler[table]
     try:
         if mongo_search_data(table, person['urlToken']) is False:  # count == 0
+            person['Time'] = datetime.now()
             person_collection.insert(person)
         else:
             if extra_field is not None:

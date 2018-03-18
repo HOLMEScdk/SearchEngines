@@ -7,11 +7,19 @@ from zhihu_crawler import Crawler_Init
 from zhihu_crawler import general
 from zhihu_crawler import DataManager
 from zhihu_crawler import HtmlDownload
+import os
+import time
+import multiprocessing
+from datetime import datetime
 socket.setdefaulttimeout(general.set_socket_timeout)
 html_download = HtmlDownload.HtmlDownload()
 
 
 def start_crawler():
+    print("进程号%s 时间%s"%(os.getpid(), datetime.now()))
+    if DataManager.empty_waiting_url() is True:
+        time.sleep(general.process_waitting)
+        general.logger.warn('Redis 无可爬取URL 当前进程睡眠\n')
     new_token = DataManager.get_waiting_url()   # id
     urlToken = str(new_token, encoding='utf-8')  # !!!!!!!!!!!!!!encoding
     general.logger.warn("开始访问用户 %s \n" % urlToken)
@@ -24,22 +32,24 @@ def start_crawler():
             flag = 1
             break
         try:
-            crawl = Crawler_Init.Craweler()
-            person = get_new_person_info(crawl, urlToken)
-            # print(type(person))
+            # crawl = Crawler_Init.Craweler()
+            person = get_new_person_info(urlToken)
             if person is False:
                 flag = 2  # 为False的时候即存储过数据
                 break
-            elif person["userType"] != "people":
-                flag = 3
-                break
+            elif person is None:
+                flag = 3  # 不能跳出去 要10次都None 那就结束
+                time.sleep(0.5)
+                continue
             else:
                 user_followers = person['followerCount']
                 break
         except Exception as e:
-            general.logger.warn("%s Failed, Times can try %d\n" % (e, now_cnt))
+            general.logger.warn("%s Failed, Times can try %d USER %s\n" % (e, now_cnt, urlToken))
+            time.sleep(1)
     else:  # Failed
-        general.logger.error('连续访问%d次都失败了，放入失败集合中\n' % general.Max_Limit)
+        general.logger.error('%d ALL FAILED，put into in the fail set %s \n' % (general.Max_Limit, urlToken))
+        DataManager.add_failed_url(general.failed_url, urlToken)
         return False, ""
     # Succeed
     if flag == 0:
@@ -50,14 +60,16 @@ def start_crawler():
     elif flag == 2:
         general.logger.info("%s 数据库已存储过\n" % urlToken)
     else:
-        general.logger.warn("%s 不是个人物\n" % urlToken)
+        general.logger.warn("因页面异常(断网) 获取信息失败\n" % urlToken)
     return False, ""
 
 
-def get_new_person_info(crawl, urlToken):
+def get_new_person_info(urlToken, crawler=None):
      # 理解opener 与 Request
     # html = crawl.get_html(url_act)
     data, parse_page = html_download.download(urlToken, "activities")  # 返回json
+    if parse_page is None:
+        return None
     user = data['entities']['users'][urlToken]
     person = {}
     try:
@@ -65,26 +77,45 @@ def get_new_person_info(crawl, urlToken):
         if person is False:  # 不用再次访问他的列表了
             return person
     except Exception as e:
-        general.logger.warn("%s 获取个人信息出现异常\n" % e)
+        general.logger.warn("%s 获取个人信息出现异常 用户%s\n" % (e, urlToken))
     # 暂未解决的性能问题 调度上不好控制 需要爬取两次所有用户的following follower
-    try:
-         store_mongo_person_follower(urlToken)
-         store_mongo_person_following(urlToken)
-         general.logger.info("%s Followers/Following 全部添加进redis中" % urlToken)
-    except Exception as e:
-        general.logger.warn("%s 获取个人关注列表出现异常\n" % e)
+    store_focus_list(urlToken, "Following", general.failed_following)
+    store_focus_list(urlToken, "Follower", general.failed_follower)
     return person
+
+
+def store_focus_list(urlToken, phrase, set_name):
+    cnt = 10
+    while cnt > 0:
+        cnt -= 1
+        try:
+            if phrase == 'Following':
+                flag = store_mongo_person_following(urlToken)
+            else:
+                flag = store_mongo_person_follower(urlToken)
+            if flag is True:
+                general.logger.info("%s %s 全部添加进redis中" % (urlToken, phrase) )
+                break
+        except Exception as e:
+            general.logger.warn("%s 获取个人%s列表出现异常 用户%s 剩余次数 %d\n" % (e, phrase, urlToken, cnt))
+            time.sleep((10 - cnt) * 2)
+    else:  # failed
+        DataManager.add_failed_url(set_name, urlToken)
 
 
 def store_mongo_person_follower(urlToken):
     if DataManager.mongo_search_data('follower_info', urlToken) is False:
-       html_download.download_follower(urlToken, 'followers')
-
+        flag = html_download.download_follower(urlToken, 'followers')
+        print("%s %s"%(urlToken, flag))
+        return flag
+    return False
 
 
 def store_mongo_person_following(urlToken):
     if DataManager.mongo_search_data('following_info', urlToken) is False:
-        html_download.download_follower(urlToken, 'following')
+        return html_download.download_follower(urlToken, 'following')
+    return False
+
 '''
 存储个人信息 及 其following/followers
 '''
@@ -100,9 +131,11 @@ def store_mongo_person_info(urlToken, user):
     person['badge'] = []
     for each in user['badge']:
         topics = []
-        for top in each['topics']:
-            topics.append(top['name'])
-        person['badge'].append({'description':each['description'], 'topics':topics})
+        if each.get('topics') is not None:
+            for top in each['topics']:
+                topics.append(top['name'])
+        person['badge'].append({'description': each['description'], 'topics': topics,
+                                'type': each['type'] if each.get('type') is not None else ''})
     # 用户的headline 有
     person['headline'] = user['headline']
     # 个人简介 有
@@ -169,12 +202,13 @@ def store_mongo_person_info(urlToken, user):
     person['thankedCount'] = user['thankedCount']
     # -1 无性别 0 woman 1 man
     person['gender'] = user['gender']
-    person['photo'] = user['avatarUrl']
+    person['photo_url'] = user['avatarUrl']
     DataManager.mongo_output_data('person_table', person)
     return person
 
 
 if __name__ == '__main__':
+
     pass
     # 等待时间测量成功
     # DataManager.add_waiting_url("si-shu-jia")
