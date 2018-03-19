@@ -3,16 +3,17 @@
 # __time__   = '2018/3/16 19:43'
 
 import socket
-from zhihu_crawler import Crawler_Init
 from zhihu_crawler import general
 from zhihu_crawler import DataManager
 from zhihu_crawler import HtmlDownload
+from zhihu_crawler import Open_Proxy_
 import os
 import time
 import multiprocessing
 from datetime import datetime
 socket.setdefaulttimeout(general.set_socket_timeout)
 html_download = HtmlDownload.HtmlDownload()
+proxy_pool = Open_Proxy_.ProxyPool()
 
 
 def start_crawler():
@@ -26,6 +27,8 @@ def start_crawler():
     now_cnt = general.Max_Limit
     user_followers = 0
     flag = 0
+    ip = proxy_pool.get_one_ip()
+    html_download.set_proxy_pool(ip)
     while now_cnt > 0:
         now_cnt -= 1
         if DataManager.judge_is_setmember(general.set_success_url, urlToken):
@@ -60,15 +63,15 @@ def start_crawler():
     elif flag == 2:
         general.logger.info("%s 数据库已存储过\n" % urlToken)
     else:
-        general.logger.warn("因页面异常(断网) 获取信息失败\n" % urlToken)
+        general.logger.warn("因页面异常(断网) 获取信息失败 %s\n" % urlToken)
     return False, ""
 
 
 def get_new_person_info(urlToken, crawler=None):
      # 理解opener 与 Request
     # html = crawl.get_html(url_act)
-    data, parse_page = html_download.download(urlToken, "activities")  # 返回json
-    if parse_page is None:
+    data = html_download.download(urlToken, "activities")  # 返回json
+    if data.get("entities") is None:
         return None
     user = data['entities']['users'][urlToken]
     person = {}
@@ -78,21 +81,24 @@ def get_new_person_info(urlToken, crawler=None):
             return person
     except Exception as e:
         general.logger.warn("%s 获取个人信息出现异常 用户%s\n" % (e, urlToken))
-    # 暂未解决的性能问题 调度上不好控制 需要爬取两次所有用户的following follower
-    store_focus_list(urlToken, "Following", general.failed_following)
-    store_focus_list(urlToken, "Follower", general.failed_follower)
+    # 暂未解决的性能问题 调度上不好控制 需要爬取两次所有用户的following follower  将就过了
+    store_focus_list(urlToken, "Following", general.failed_following, user["followerCount"])
+    store_focus_list(urlToken, "Follower", general.failed_follower, user["followingCount"])
     return person
 
 
-def store_focus_list(urlToken, phrase, set_name):
+def store_focus_list(urlToken, phrase, set_name, total_num):
     cnt = 10
     while cnt > 0:
         cnt -= 1
+        flag = False
         try:
             if phrase == 'Following':
-                flag = store_mongo_person_following(urlToken)
+                if DataManager.mongo_search_data('follower_info', urlToken) is False:
+                    flag = HtmlDownload.download_follower(urlToken, 'followers', "follower_info", total_num)
             else:
-                flag = store_mongo_person_follower(urlToken)
+                if DataManager.mongo_search_data('following_info', urlToken) is False:
+                    flag = HtmlDownload.download_follower(urlToken, 'following', "following_info", total_num)
             if flag is True:
                 general.logger.info("%s %s 全部添加进redis中" % (urlToken, phrase) )
                 break
@@ -103,18 +109,6 @@ def store_focus_list(urlToken, phrase, set_name):
         DataManager.add_failed_url(set_name, urlToken)
 
 
-def store_mongo_person_follower(urlToken):
-    if DataManager.mongo_search_data('follower_info', urlToken) is False:
-        flag = html_download.download_follower(urlToken, 'followers')
-        print("%s %s"%(urlToken, flag))
-        return flag
-    return False
-
-
-def store_mongo_person_following(urlToken):
-    if DataManager.mongo_search_data('following_info', urlToken) is False:
-        return html_download.download_follower(urlToken, 'following')
-    return False
 
 '''
 存储个人信息 及 其following/followers
@@ -204,6 +198,7 @@ def store_mongo_person_info(urlToken, user):
     person['gender'] = user['gender']
     person['photo_url'] = user['avatarUrl']
     DataManager.mongo_output_data('person_table', person)
+    DataManager.mongo_output_data('person_json', user)
     return person
 
 

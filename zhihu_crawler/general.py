@@ -8,7 +8,8 @@ import logging.handlers
 process_waitting = 20              		# 进程等待时间
 set_socket_timeout = 120          		# socket 请求超时时间
 Max_Limit = 10              		    # 尝试次数
-max_process_num = 6        	        # 抓取最大进程数
+max_process_num = 50        	        # 抓取最大进程数
+max_thread_num = 10
 waiting_url = 'waiting_url'     		# 待抓取节点集合
 zset_success_url = 'zset_success_url'   # url成功有序集合
 set_success_url = 'set_success_url' 	# url成功集合

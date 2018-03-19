@@ -27,7 +27,7 @@ if __name__ == '__main__':
             general.max_process_num = 6
             try:
                 pool = multiprocessing.Pool(processes=general.max_process_num)
-                for i in range(general.max_process_num):
+                for i in range(10000):
                     pool.apply_async(Crawler_Start.start_crawler, args=())
                 # 关闭进程池，使其不再接受请求
                 pool.close()
