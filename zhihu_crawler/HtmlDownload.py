@@ -4,19 +4,25 @@
 
 from urllib import request
 from urllib import parse
-from zhihu_crawler import general
-from zhihu_crawler import DataManager
+import general
+import DataManager
 import multiprocessing
 import socket
 import json
 from bs4 import BeautifulSoup as BS
 import re
 import time
-from zhihu_crawler import Open_Proxy_
+import Open_Proxy_
 import threading
 socket.setdefaulttimeout(general.set_socket_timeout)
 
 proxy_pool = Open_Proxy_.ProxyPool()
+
+
+class CustomException(Exception):
+    def __init__(self, warning):
+        Exception.__init__(self)
+        self.warning = warning
 
 
 class HtmlDownload(object):
@@ -33,6 +39,7 @@ class HtmlDownload(object):
                    'Connection': 'keep-alive',
                    }
         self.current_proxy = []
+        self.ip = ""
         self.own_opener = request.build_opener()  # 设置opener 为了更换ip 得到新cookie
 
     def set_proxy_pool(self, ip):
@@ -43,8 +50,11 @@ class HtmlDownload(object):
 
     def reset_proxyip(self):
         # 获取新代理
-        ip = proxy_pool.get_one_ip()
-        self.set_proxy_pool(ip)
+        self.ip = proxy_pool.get_one_ip()
+        self.set_proxy_pool(self.ip)
+
+    def get_proxyip(self):
+        print(self.ip)
 
     def download(self, urlToken, page, postdata=None):
         if urlToken is None:
@@ -54,16 +64,22 @@ class HtmlDownload(object):
             if postdata is not None:  # 需要encode
                 postdata = str(parse.urlencode(postdata))
                 url = '%s/people/%s/%s%s' % (general.host, urlToken, page, postdata,)
-            time.sleep(1)
+            print(url)
+            time.sleep(0.5)
             req = request.Request(url, headers=self.headers)  # Request伪装
             response = self.own_opener.open(req)  # 使用代理
             htm = str(response.read(), encoding="utf-8")
             data = self.html_parse(htm)
+            # print(data)
+            # print(data['entities']['users'])
         except Exception as e:
-            general.logger.warn("%s 下载html异常 用户 %s\n" % (e, urlToken))
-            self.reset_proxyip()
-            time.sleep(5)
-            return {}
+                # threading.Lock().acquire()
+                general.logger.warn("%s 下载html异常 用户 %s\n" % (e, urlToken))
+                self.reset_proxyip()
+                # print(self.get_proxyip())
+                time.sleep(2)
+                # threading.Lock().release()
+                return {}
         return data
 
     def thread_download_follower(self, urlToken, phrase, table, start_page, each_thread_page):
@@ -71,47 +87,50 @@ class HtmlDownload(object):
         pages["page"] = start_page - 1  # 开始先要-1
         # 开头这样做为了检查有无用户follower
         cnt = 0
-        total_page = each_thread_page if each_thread_page != 0 else 1 # 每一个线程最大执行页面数量
+        total_page = each_thread_page if each_thread_page != 0 else 1  # 每一个线程最大执行页面数量
         total_follower = dict()
         total_follower['urlToken'] = urlToken
         attr = phrase
         phrase += '?'
         total_follower[attr] = []
         non_count = 0
+        time.sleep(1)
         while cnt < total_page:
             cnt += 1
             pages["page"] += 1
             try:
                 data = self.download(urlToken, phrase, pages)  # 拼接url
+                # print(data)
                 if data.get("entities") is None:
                     cnt -= 1
                     pages["page"] -= 1
-                    time.sleep(3)
-                    non_count += 1
-                    if non_count >= 4:
-                        self.reset_proxyip()
-                        non_count = 0
+                    time.sleep(2)
+                    non_count += 2
                     continue
-                data = list(data['entities']['users'])
+                if len(data["entities"]["users"]) == 0:
+                    raise CustomException("用户信息设置隐私")
+            except CustomException:
+                general.logger.warn("用户%s设置隐私权限"%urlToken)
+                return False
             except Exception as e:
                 self.reset_proxyip()
                 general.logger.warn("%s 增加用户列表出现异常 用户%s 切换代理" % (e, urlToken))
                 cnt -= 1; pages["page"] -= 1
                 time.sleep(2)
                 continue
+            data = list(data['entities']['users'])
             for each in data:  # 拿到每一页的用户id
                 if each == urlToken:
                     continue
-                DataManager.add_waiting_url(each)  # 增加follower 到等待队列中
+                DataManager.add_waiting_url(general.waiting_url, each)  # 增加follower 到等待队列中
                 total_follower[attr].append(each)
-            if cnt % 100 == 0:
-                DataManager.mongo_output_data(table, total_follower, attr)
-                total_follower[attr].clear()
-                general.logger.warn('用户%s列表查询到第%d页'%(urlToken, cnt))
+            # if cnt % 100 == 0:
+            #     DataManager.mongo_output_data(table, total_follower, attr)
+            #     total_follower[attr].clear()
+            #     general.logger.warn('用户%s列表查询到第%d页'%(urlToken, cnt))
         if len(total_follower[attr]) > 0:
             DataManager.mongo_output_data(table, total_follower, attr)
-            total_follower[attr].clear()
-        return
+        return True
 
     def html_parse(self, html):
         try:
@@ -132,48 +151,89 @@ class HtmlDownload(object):
             general.logger.warn("%s HTML解析出现异常 " % e)
             return dict()
 
+    def thread_following_follower(self, urlToken, phrase, table, start_page, each_thread_page,name):  # 其实就是每个爬取一页
+        pages = dict()
+        pages["page"] = start_page - 1  # 开始先要-1
+        cnt = 0
+        total_page = each_thread_page if each_thread_page != 0 else 1  # 每一个线程最大执行页面数量
+        focus = {}
+        attr = phrase
+        phrase += '?'
+        time.sleep(0.5)
+        while cnt < total_page:
+            cnt += 1
+            pages["page"] += 1
+            try:
+                data = self.download(urlToken, phrase, pages)  # 拼接url
+                print(data)
+                if data.get("entities") is None:
+                    cnt -= 1
+                    pages["page"] -= 1
+                    time.sleep(1)
+                    continue
+                if len(data["entities"]["users"]) == 0:
+                    raise CustomException("用户信息设置隐私")
+            except CustomException:
+                general.logger.warn("用户%s设置隐私权限"%urlToken)
+                return False
+            except Exception as e:
+                self.reset_proxyip()
+                general.logger.warn("%s 增加用户列表出现异常 用户%s 切换代理" % (e, urlToken))
+                cnt -= 1; pages["page"] -= 1
+                time.sleep(2)
+                continue
+            for k, v in data['entities'][name].items():  # 拿到每一页 columns 或者 topics
+                # 专栏也用redis缓存
+                focus['urlToken'] = k
+                focus["info"] = {'author': {'type':v['author']['type'], 'name': v['author']['name']}, 'articlesCount': v['articlesCount']
+                            ,'title': v['title'], 'description': v['description'], 'followers': v['followers'], }
+        if len(focus) > 0:
+            DataManager.mongo_output_data(table, attr)
+        return True
 
-def download_follower(urlToken, phrase, table, total_num):  # total_num 是同一时间 改话题的总数量 / 一页的20即可
-    pages = dict()
-    pages["page"] = 1
+
+def thread_start(urlToken, phrase, table,start_page, each_thread_page):
+    ht = HtmlDownload()
+    ht.reset_proxyip()
+    ht.thread_download_follower(urlToken, phrase, table,start_page, each_thread_page)
+
+
+def download_follower(urlToken, phrase, table, total_num, type_):  # total_num 是同一时间 改话题的总数量 / 一页的20即可
     # 开头这样做为了检查有无用户follower
-    phrase += '?'
-    # while True:  # 为了更快 把这个判断省了
-    #     data, total_page = self.download(urlToken, phrase, pages)  # 拼接url
-    #     if data.get("entities") is not None:
-    #         break
     start_page = 1
     total_page = int(abs(total_num-1) / 20) + 1
-    # print(total_page)
+    print(total_page)
     try:
-        if total_page < 10000000:
-            ht = HtmlDownload()
-            ht.thread_download_follower(urlToken, phrase, table, start_page, total_page)
-        else:
-            each_thread_page = total_page / general.max_process_num
-            # each_thread_page = total_page
-            pool = multiprocessing.Pool()
-            for i in range(general.max_process_num):
-                ht = HtmlDownload()
-                each_thread_page = each_thread_page if i != general.max_process_num - 1 else total_page - start_page
-                pool.apply_async(ht.thread_download_follower, args=(urlToken, phrase, table,start_page,
-                                                                       each_thread_page))
-                start_page += each_thread_page
+        # ht = HtmlDownload()
+        # ht.thread_download_follower(urlToken, phrase, table, start_page, total_page)
+        pool = multiprocessing.Pool(processes=4)
+        ht = HtmlDownload()
+        if type_ == 'user':
+            for i in range(total_page):
+                pool.apply_async(ht.thread_download_follower, args=(urlToken, phrase, table, start_page,1))
+                start_page += 1
 
-            pool.close()
-            pool.join()
+        else:
+            print(1123)
+            for i in range(total_page):
+                pool.apply_async(ht.thread_following_follower, args=(urlToken, phrase, table, start_page,1))
+                start_page += 1
+
+        pool.close()
+        pool.join()
+        '''
             # thread_list = []
             # for i in range(general.max_thread_num):
-            #     ht = HtmlDownload()
             #     each_thread_page = each_thread_page if i != general.max_thread_num-1 else total_page - start_page
-            #     t = threading.Thread(target=ht.thread_download_follower, name="Thread%d"%i, args=(urlToken, phrase, table,
-            #                                                                                      start_page, each_thread_page))
+            #     t = threading.Thread(target=thread_start, name="Thread%d"%i, args=(urlToken, phrase, table,
+            #                                                                        start_page, each_thread_page))
             #     thread_list.append(t)
             #     t.start()
             #     start_page += each_thread_page
             #
             # for each in thread_list:
             #     each.join()
+        '''
     except Exception as e:
         general.logger.warn("%s download_follower 异常 %s " % (e, urlToken) )
         return False
@@ -182,7 +242,10 @@ def download_follower(urlToken, phrase, table, total_num):  # total_num 是同�
 
 if __name__ == '__main__':
     ht = HtmlDownload()
-    name = "rong-ma-ma-70"
+    name = "a-hang-xian-sheng-61"  # hong-men-gui-xiu-10
+    # rong-ma-ma-70
     time_0 = time.time()
-    ans = download_follower(name, 'following', 'following_info', 344)
-    print(ans, "结束：",time.time() - time_0)
+    # ans = download_follower(name, 'followers', 'follower_info', 661,'user')
+    # ans = download_follower(name, 'following/columns', 'columns_info', 8, 'topics')
+    ans = ht.thread_download_follower(name, 'following/columns', 'columns_info', 1, 1 )
+    print(ans, "结束：", time.time() - time_0)

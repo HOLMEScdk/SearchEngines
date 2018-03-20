@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # __author__ = 'K_HOLMES_'
 # __time__   = '2018/3/17 9:52'
-from zhihu_crawler import general
+import general
 import pymongo
 import redis
-from datetime import  datetime
+from datetime import datetime
 # mongo
 mg_client = pymongo.MongoClient(general.mongo_host, general.mongo_port)
 mongo_crawler = mg_client.zhihu_crawler
@@ -23,28 +23,33 @@ def add_failed_url(table,url):
     r0_waitting.sadd(table, url)
 
 
-def empty_waiting_url():
-    return r0_waitting.scard(general.waiting_url) == 0
+def empty_waiting_url(table):
+    return r0_waitting.scard(table) == 0
 
 
-def get_waiting_url():
-    new_url = r0_waitting.spop(general.waiting_url)
+def get_waiting_url(table):
+    new_url = r0_waitting.spop(table)
+    new_url = str(new_url, encoding='utf-8')
     return new_url
 
 
-def add_waiting_url(url):
-    r0_waitting.sadd(general.waiting_url, url)
-    return True
+def add_waiting_url(table, url):
+    return r0_waitting.sadd(table, url)
 
 
-def judge_is_setmember(setname, url):
-    return r2_succeed.sismember(setname, url) is True
+
+def judge_is_setmember(table, url):
+    return r2_succeed.sismember(table, url) is True
 
 
 def add_person_into_redis(urlToken, user_followers):
     r2_succeed.zadd(general.zset_success_url, urlToken, user_followers)
-    r2_succeed.sadd(general.set_success_url, urlToken)
+    r2_succeed.sadd(general.person_success_url, urlToken)
     return True, urlToken
+
+
+def add_person_list_success(urlToken):
+    r2_succeed.sadd(general.person_list_success_url, urlToken)
 
 
 def mongo_search_data(table, urlToken):  # judge whether store in mongo
@@ -70,3 +75,16 @@ def mongo_output_data(table, person, extra_field=None):  # store in mongo 如果
         print(e, " 数据库插入失败")
         general.logger.error( "%s 数据库插入失败"% e)
     return True
+
+
+def store_hash_kv(urlToken, attr_dict):
+    r0_waitting.hmset(urlToken, attr_dict)
+
+
+def delete_hash_kv(urlToken):
+    r0_waitting.delete(urlToken)
+
+
+def get_hash_kv(urlToken, key):
+    return int(r0_waitting.hget(urlToken, key).decode())
+

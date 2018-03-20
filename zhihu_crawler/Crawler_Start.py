@@ -3,10 +3,10 @@
 # __time__   = '2018/3/16 19:43'
 
 import socket
-from zhihu_crawler import general
-from zhihu_crawler import DataManager
-from zhihu_crawler import HtmlDownload
-from zhihu_crawler import Open_Proxy_
+import general
+import DataManager
+import HtmlDownload
+import Open_Proxy_
 import os
 import time
 import multiprocessing
@@ -17,76 +17,71 @@ proxy_pool = Open_Proxy_.ProxyPool()
 
 
 def start_crawler():
-    print("进程号%s 时间%s"%(os.getpid(), datetime.now()))
-    if DataManager.empty_waiting_url() is True:
+    # print("进程号%s 时间%s"%(os.getpid(), datetime.now()))
+    if DataManager.empty_waiting_url(general.waiting_url) is True:
         time.sleep(general.process_waitting)
         general.logger.warn('Redis 无可爬取URL 当前进程睡眠\n')
-    new_token = DataManager.get_waiting_url()   # id
-    urlToken = str(new_token, encoding='utf-8')  # !!!!!!!!!!!!!!encoding
+    urlToken = DataManager.get_waiting_url(general.waiting_url)   # id
+    # urlToken = str(new_token, encoding='utf-8')  # !!!!!!!!!!!!!!encoding
     general.logger.warn("开始访问用户 %s \n" % urlToken)
     now_cnt = general.Max_Limit
     user_followers = 0
-    flag = 0
     ip = proxy_pool.get_one_ip()
     html_download.set_proxy_pool(ip)
     while now_cnt > 0:
         now_cnt -= 1
-        if DataManager.judge_is_setmember(general.set_success_url, urlToken):
-            flag = 1
-            break
+        if DataManager.judge_is_setmember(general.person_success_url, urlToken):
+            general.logger.warn("%s redis已经存在该用户\n" % urlToken)
+            return
         try:
             # crawl = Crawler_Init.Craweler()
-            person = get_new_person_info(urlToken)
-            if person is False:
-                flag = 2  # 为False的时候即存储过数据
-                break
-            elif person is None:
-                flag = 3  # 不能跳出去 要10次都None 那就结束
+            flag = get_new_person_info(urlToken)
+            if flag == "DataBaseExists":  # 存储过数据
+                general.logger.info("%s 数据库已存储过\n" % urlToken)
+                return
+            elif flag == "PageError":
+                 # 不能跳出去 要10次都None 那就结束
                 time.sleep(0.5)
                 continue
-            else:
-                user_followers = person['followerCount']
+            elif flag == "SetPrivacy":
                 break
+            elif flag == "Succeed":
+                DataManager.add_waiting_url(general.waiting_list_url, urlToken)  # 个人列表等待队列
+                DataManager.add_person_into_redis(urlToken, user_followers)
+                return True
         except Exception as e:
             general.logger.warn("%s Failed, Times can try %d USER %s\n" % (e, now_cnt, urlToken))
             time.sleep(1)
     else:  # Failed
         general.logger.error('%d ALL FAILED，put into in the fail set %s \n' % (general.Max_Limit, urlToken))
         DataManager.add_failed_url(general.failed_url, urlToken)
-        return False, ""
+        return False
     # Succeed
-    if flag == 0:
-        user_followers += 1  # 有些人没有关注者 则为0无意义 都+1
-        return DataManager.add_person_into_redis(urlToken, user_followers)
-    elif flag == 1:
-        general.logger.warn("%s redis已经存在该用户\n" % urlToken)
-    elif flag == 2:
-        general.logger.info("%s 数据库已存储过\n" % urlToken)
-    else:
-        general.logger.warn("因页面异常(断网) 获取信息失败 %s\n" % urlToken)
-    return False, ""
+    return False
 
 
 def get_new_person_info(urlToken, crawler=None):
      # 理解opener 与 Request
     # html = crawl.get_html(url_act)
     data = html_download.download(urlToken, "activities")  # 返回json
-    if data.get("entities") is None:
-        return None
+    if data.get("entities") is None:  # 页面获取出错
+        return "PageError"
+    if len(data['entities']['users']) == 0:  # 用户设置了权限
+        return "SetPrivacy"
     user = data['entities']['users'][urlToken]
-    person = {}
+    # person = {}
     try:
         person = store_mongo_person_info(urlToken, user)
         if person is False:  # 不用再次访问他的列表了
-            return person
+            return "DataBaseExists"
     except Exception as e:
         general.logger.warn("%s 获取个人信息出现异常 用户%s\n" % (e, urlToken))
     # 暂未解决的性能问题 调度上不好控制 需要爬取两次所有用户的following follower  将就过了
-    store_focus_list(urlToken, "Following", general.failed_following, user["followerCount"])
-    store_focus_list(urlToken, "Follower", general.failed_follower, user["followingCount"])
-    return person
+    # store_focus_list(urlToken, "Following", general.failed_following, user["followerCount"])
+    # store_focus_list(urlToken, "Follower", general.failed_follower, user["followingCount"])
+    return "Succeed"
 
-
+'''
 def store_focus_list(urlToken, phrase, set_name, total_num):
     cnt = 10
     while cnt > 0:
@@ -108,14 +103,14 @@ def store_focus_list(urlToken, phrase, set_name, total_num):
     else:  # failed
         DataManager.add_failed_url(set_name, urlToken)
 
-
-
+'''
 '''
 存储个人信息 及 其following/followers
 '''
 
+
 def store_mongo_person_info(urlToken, user):
-    if DataManager.mongo_search_data('person_table',urlToken) is True:
+    if DataManager.mongo_search_data('person_table', urlToken) is True:
         return False
     person = {}
     person['urlToken'] = urlToken
@@ -199,12 +194,38 @@ def store_mongo_person_info(urlToken, user):
     person['photo_url'] = user['avatarUrl']
     DataManager.mongo_output_data('person_table', person)
     DataManager.mongo_output_data('person_json', user)
-    return person
+    attr_dict = {
+        'followerCount': person['followerCount'],
+        'followingColumnsCount': person['followingColumnsCount'],
+        'followingTopicCount': person['followingTopicCount'],
+        'followingCount': person['followingCount']
+    }
+    DataManager.store_hash_kv(urlToken, attr_dict)
+    return True
 
 
 if __name__ == '__main__':
+    DataManager.add_waiting_url(general.waiting_url, "bing-po-yin-zhen-36")
+    DataManager.add_waiting_url(general.waiting_url, "yang-dong-liang-6")
+    DataManager.add_waiting_url(general.waiting_url, "jieyan")
+    DataManager.add_waiting_url(general.waiting_url, "hu-mars")
+    DataManager.add_waiting_url(general.waiting_url, "python_shequ")
+    DataManager.add_waiting_url(general.waiting_url, "rong-ma-ma-70")
+    while True:
+        while DataManager.empty_waiting_url(general.waiting_url) is True:  # 没有待爬取的url scard equal len
+            time.sleep(general.process_waitting * 5)
+            general.logger.warn('Redis 无可爬取URL 睡眠\n')
+            print("睡眠")
+        while DataManager.empty_waiting_url(general.waiting_url) is False:
+            try:
+                pool = multiprocessing.Pool(processes=general.max_process_num)
+                for i in range(100):
+                    pool.apply_async(start_crawler, args=())
+                pool.close()
+                pool.join()
+                # complet_person, urlToken = Crawler_Start.start_crawler()
+            except Exception as e:
+                general.logger.info("%s start_crawler 异常" % e)
+        print("在等待循环中")
+        general.logger.info("在等待循环中")
 
-    pass
-    # 等待时间测量成功
-    # DataManager.add_waiting_url("si-shu-jia")
-    # start_crawler()

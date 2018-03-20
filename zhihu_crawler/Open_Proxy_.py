@@ -6,7 +6,7 @@
 
 import requests
 import random
-from zhihu_crawler import general
+import general
 class ProxyPool():
     host = 'http://127.0.0.1:8000'  # 代理池请求IP
     ip_pool = []
@@ -36,7 +36,7 @@ class ProxyPool():
             'ip':ip[0]
         }
 
-        response = requests.get(url,params=params,timeout=10)
+        response = requests.get(url, params=params, timeout=10)
         return response.content
 
     def sum(self):
