@@ -26,10 +26,10 @@ def store_focus_list(urlToken, phrase, set_name, total_num):
             elif phrase == 'following':
                 if DataManager.mongo_search_data('following_info', urlToken) is False:
                     flag = HtmlDownload.download_follower(urlToken, 'following', "following_info", total_num, 'user')
-            # elif phrase == 'followingColumnsCount'
-            #     flag = HtmlDownload.download_follower(urlToken, 'columns', "columns_info", total_num)
-            # elif phrase == 'followingTopicCount':
-            #     flag = HtmlDownload.download_follower(urlToken, 'topics', "topics_info", total_num)
+            elif phrase == 'followingColumnsCount':
+                flag = HtmlDownload.download_follower(urlToken, 'following/columns', "columns_info", total_num, 'columns')
+            elif phrase == 'followingTopicCount':
+                flag = HtmlDownload.download_follower(urlToken, 'following/topics', "topics_info", total_num, 'topics')
             if flag is True:
                 general.logger.info("%s %s 全部添加进redis中" % (urlToken, phrase) )
                 break
@@ -58,8 +58,8 @@ if __name__ == '__main__':
             try:
                 store_focus_list(urlToken, "follower", general.failed_follower, followerCount)
                 store_focus_list(urlToken, "following", general.failed_following, followingCount)
-                # store_focus_list(urlToken, "followingTopicCount", general.failed_followingtopic, followingTopicCount)
-                # store_focus_list(urlToken, "followingColumnsCount", general.failed_followingColumns, followingColumnsCount)
+                store_focus_list(urlToken, "followingTopicCount", general.failed_followingtopic, followingTopicCount)
+                store_focus_list(urlToken, "followingColumnsCount", general.failed_followingColumns, followingColumnsCount)
                 DataManager.delete_hash_kv(urlToken)
                 DataManager.add_person_list_success(urlToken)
             except Exception as e:

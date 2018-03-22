@@ -8,11 +8,12 @@ import logging.handlers
 process_waitting = 20              		# 进程等待时间
 set_socket_timeout = 120          		# socket 请求超时时间
 Max_Limit = 10              		    # 尝试次数
-max_process_num = 4       	        # 抓取最大进程数
+max_process_num = 6       	        # 抓取最大进程数
 max_thread_num = 4
 waiting_url = 'waiting_url'     		# 待抓取节点集合
 waiting_list_url = 'waiting_list_url'   # 等待抓取的个人列表
 person_list_success_url = 'person_list_success_url'  # 个人信息列表
+focus_list_success_url = 'focus_list_success_url'
 zset_success_url = 'zset_success_url'   # url成功有序集合
 person_success_url = 'person_success_url' 	# url成功集合
 failed_url = 'failed_url'                # 信息抓取失败节点集合

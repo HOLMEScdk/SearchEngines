@@ -20,6 +20,7 @@ class ProxyPool():
         }
         response = requests.get(self.host, params=params, timeout=10)
         self.ip_pool = eval(response.content)
+        print(self.ip_pool)
 
     def get_one_ip(self):
         if len(self.ip_pool) == 0:
@@ -35,7 +36,6 @@ class ProxyPool():
         params = {
             'ip':ip[0]
         }
-
         response = requests.get(url, params=params, timeout=10)
         return response.content
 
@@ -47,4 +47,4 @@ class ProxyPool():
 
 if __name__ == '__main__':
     x = ProxyPool()
-    print(x.sum(),x.get_one_ip()[0])
+    # print(x.sum(),x.get_one_ip()[0])

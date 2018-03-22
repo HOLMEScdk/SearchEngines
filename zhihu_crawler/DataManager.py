@@ -30,12 +30,14 @@ def empty_waiting_url(table):
 def get_waiting_url(table):
     new_url = r0_waitting.spop(table)
     new_url = str(new_url, encoding='utf-8')
+    print(r0_waitting.scard(table))
     return new_url
 
 
 def add_waiting_url(table, url):
-    return r0_waitting.sadd(table, url)
-
+    if judge_is_setmember(general.person_success_url, url) is False:
+        r0_waitting.sadd(table, url)
+    return True
 
 
 def judge_is_setmember(table, url):
@@ -50,6 +52,10 @@ def add_person_into_redis(urlToken, user_followers):
 
 def add_person_list_success(urlToken):
     r2_succeed.sadd(general.person_list_success_url, urlToken)
+
+
+def add_focus_list_success(urlToken):
+    r2_succeed.sadd(general.focus_list_success_url, urlToken)
 
 
 def mongo_search_data(table, urlToken):  # judge whether store in mongo
@@ -74,6 +80,20 @@ def mongo_output_data(table, person, extra_field=None):  # store in mongo 如果
     except Exception as e:
         print(e, " 数据库插入失败")
         general.logger.error( "%s 数据库插入失败"% e)
+    return True
+
+
+def mongo_following_output_data(table, list_dict):
+    try:
+        for each in list_dict:
+            if mongo_search_data(table, each['urlToken']) is False:
+                each['Time'] = datetime.now()
+                mongo_crawler[table].insert(each)
+                add_focus_list_success(each['urlToken'])
+    except Exception as e:
+        print(e, " 数据库插入失败")
+        general.logger.error("%s 数据库插入%s失败" % (e, table) )
+        return False
     return True
 
 

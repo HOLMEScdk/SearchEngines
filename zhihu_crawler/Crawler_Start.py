@@ -205,11 +205,11 @@ def store_mongo_person_info(urlToken, user):
 
 
 if __name__ == '__main__':
-    DataManager.add_waiting_url(general.waiting_url, "bing-po-yin-zhen-36")
-    DataManager.add_waiting_url(general.waiting_url, "yang-dong-liang-6")
-    DataManager.add_waiting_url(general.waiting_url, "jieyan")
-    DataManager.add_waiting_url(general.waiting_url, "hu-mars")
-    DataManager.add_waiting_url(general.waiting_url, "python_shequ")
+    # DataManager.add_waiting_url(general.waiting_url, "bing-po-yin-zhen-36")
+    # DataManager.add_waiting_url(general.waiting_url, "yang-dong-liang-6")
+    # DataManager.add_waiting_url(general.waiting_url, "jieyan")
+    # DataManager.add_waiting_url(general.waiting_url, "hu-mars")
+    # DataManager.add_waiting_url(general.waiting_url, "python_shequ")
     DataManager.add_waiting_url(general.waiting_url, "rong-ma-ma-70")
     while True:
         while DataManager.empty_waiting_url(general.waiting_url) is True:  # 没有待爬取的url scard equal len
