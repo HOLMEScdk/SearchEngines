@@ -7,11 +7,9 @@ import socket
 import general
 import DataManager
 import HtmlDownload
-import Open_Proxy_
 import time
 socket.setdefaulttimeout(general.set_socket_timeout)
 html_download = HtmlDownload.HtmlDownload()
-proxy_pool = Open_Proxy_.ProxyPool()
 
 
 def store_focus_list(urlToken, phrase, set_name, total_num):

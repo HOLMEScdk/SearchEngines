@@ -13,7 +13,7 @@ import multiprocessing
 from datetime import datetime
 socket.setdefaulttimeout(general.set_socket_timeout)
 html_download = HtmlDownload.HtmlDownload()
-proxy_pool = Open_Proxy_.ProxyPool()
+# proxy_pool = Open_Proxy_.ProxyPool()
 
 
 def start_crawler():
@@ -21,12 +21,14 @@ def start_crawler():
     if DataManager.empty_waiting_url(general.waiting_url) is True:
         time.sleep(general.process_waitting)
         general.logger.warn('Redis 无可爬取URL 当前进程睡眠\n')
-    urlToken = DataManager.get_waiting_url(general.waiting_url)   # id
+    urlToken = DataManager.get_waiting_url(general.waiting_url)
+    if urlToken is None:
+        return
     # urlToken = str(new_token, encoding='utf-8')  # !!!!!!!!!!!!!!encoding
     general.logger.warn("开始访问用户 %s \n" % urlToken)
     now_cnt = general.Max_Limit
     user_followers = 0
-    ip = proxy_pool.get_one_ip()
+    ip = DataManager.get_ip()
     html_download.set_proxy_pool(ip)
     while now_cnt > 0:
         now_cnt -= 1
@@ -219,7 +221,7 @@ if __name__ == '__main__':
         while DataManager.empty_waiting_url(general.waiting_url) is False:
             try:
                 pool = multiprocessing.Pool(processes=general.max_process_num)
-                for i in range(100):
+                for i in range(general.max_process_num):
                     pool.apply_async(start_crawler, args=())
                 pool.close()
                 pool.join()

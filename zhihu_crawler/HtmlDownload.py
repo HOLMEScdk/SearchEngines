@@ -12,11 +12,9 @@ import json
 from bs4 import BeautifulSoup as BS
 import re
 import time
-import Open_Proxy_
-import threading
 socket.setdefaulttimeout(general.set_socket_timeout)
 
-proxy_pool = Open_Proxy_.ProxyPool()
+# proxy_pool = Open_Proxy_.ProxyPool()
 
 
 class CustomException(Exception):
@@ -39,22 +37,24 @@ class HtmlDownload(object):
                    'Connection': 'keep-alive',
                    }
         self.current_proxy = []
-        self.ip = ""
         self.own_opener = request.build_opener()  # 设置opener 为了更换ip 得到新cookie
 
-    def set_proxy_pool(self, ip):
-        general.logger.info("设置代理%s", ip[0])
-        handler = request.ProxyHandler({'http': '%s:%d' % (ip[0], ip[1])})
+    def set_proxy_pool(self, IP):
+        general.logger.info("设置代理%s", IP[0])
+        handler = request.ProxyHandler({'http': '%s:%d' % (IP[0], IP[1])})
         self.own_opener = request.build_opener(handler)
-        self.current_proxy = ip
+        self.current_proxy = IP
 
     def reset_proxyip(self):
         # 获取新代理
-        self.ip = proxy_pool.get_one_ip()
-        self.set_proxy_pool(self.ip)
+        # proxy_pool.modify_ip(self.current_proxy)  # 修改当前的ip分数
+        # ip = proxy_pool.get_one_ip()
+        DataManager.decrease_ip(self.current_proxy)
+        ip = DataManager.get_ip()
+        self.set_proxy_pool(ip)
 
     def get_proxyip(self):
-        print(self.ip)
+        print(self.current_proxy)
 
     def download(self, urlToken, page, postdata=None):
         if urlToken is None:
@@ -93,7 +93,6 @@ class HtmlDownload(object):
         total_follower[attr] = []
         non_count = 0
         time_try = 0
-        time.sleep(0.5)
         while cnt < total_page:
             cnt += 1
             pages["page"] += 1
@@ -212,28 +211,39 @@ class HtmlDownload(object):
 
 def download_follower(urlToken, phrase, table, total_num, type_):  # total_num 是同一时间 改话题的总数量 / 一页的20即可
     # 开头这样做为了检查有无用户follower
-    start_page = 1
     total_page = int(abs(total_num-1) / 20) + 1
     # print(total_page)
     try:
         # ht = HtmlDownload()
         # ht.thread_download_follower(urlToken, phrase, table, start_page, total_page)
-        pool = multiprocessing.Pool(processes=2)
         ht = HtmlDownload()
+        half_page = total_page/general.min_process_num
+        start_page = 1
         if type_ == 'user':
-            for i in range(total_page):
-                pool.apply_async(ht.thread_download_follower, args=(urlToken, phrase, table, start_page, 1))
-                start_page += 1
+            for i in range(int(half_page+0.5)):
+                pool = multiprocessing.Pool(processes=general.min_process_num)
+                for j in range(general.min_process_num):
+                    print("1")
+                    pool.apply_async(ht.thread_download_follower, args=(urlToken, phrase, table, start_page, 1))
+                    start_page += 1
+                pool.close()
+                pool.join()
+                time.sleep(2)
                 if i % 100 == 0:
-                    general.logger.warn('用户%s列表查询到第%d页'%(urlToken, i))
+                   general.logger.warn('用户%s列表查询到第%d页'%(urlToken, i))
 
         else:
-            for i in range(total_page):
-                pool.apply_async(ht.thread_following_follower, args=(urlToken, phrase, table, start_page, 1, type_))
-                start_page += 1
+            for i in range(int(half_page + 0.5)):
+                pool = multiprocessing.Pool(processes=general.min_process_num)
+                for j in range(general.min_process_num):
+                    pool.apply_async(ht.thread_following_follower, args=(urlToken, phrase, table, start_page, 1, type_))
+                    start_page += 1
+                pool.close()
+                pool.join()
+                time.sleep(2)
+                if i % 100 == 0:
+                   general.logger.warn('用户%s列表查询到第%d页'%(urlToken, i))
 
-        pool.close()
-        pool.join()
     except Exception as e:
         general.logger.warn("%s download_follower 异常 %s " % (e, urlToken))
         return False

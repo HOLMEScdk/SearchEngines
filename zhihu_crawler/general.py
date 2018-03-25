@@ -9,7 +9,7 @@ process_waitting = 20              		# 进程等待时间
 set_socket_timeout = 120          		# socket 请求超时时间
 Max_Limit = 10              		    # 尝试次数
 max_process_num = 6       	        # 抓取最大进程数
-max_thread_num = 4
+min_process_num = 3
 waiting_url = 'waiting_url'     		# 待抓取节点集合
 waiting_list_url = 'waiting_list_url'   # 等待抓取的个人列表
 person_list_success_url = 'person_list_success_url'  # 个人信息列表
@@ -33,7 +33,7 @@ mongo_port = 27017					    # mongodb 主机端口
 
 # 配置日志
 def set_logger():
-    LOG_FILE = 'crawler.log'
+    LOG_FILE = 'crawler3.log'
 
     handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1024 * 1024 * 1024, backupCount=5)  # 实例化handler
     fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(message)s'

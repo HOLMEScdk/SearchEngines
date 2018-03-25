@@ -4,19 +4,48 @@
 import general
 import pymongo
 import redis
+import random
 from datetime import datetime
 # mongo
 mg_client = pymongo.MongoClient(general.mongo_host, general.mongo_port)
 mongo_crawler = mg_client.zhihu_crawler
 
 # Redis
-r0_waitting = redis.Redis(host=general.redis_host, port=general.redis_port, db=0)
+r0_waitting = redis.Redis(host=general.redis_host, port=general.redis_port, db=0, decode_responses=True)
 # fail 也是r0
 '''
 两个数据结构 一个set集合去重复
 一个zset 可以作为之后分数查询的内容
 '''
-r2_succeed = redis.Redis(host=general.redis_host, port=general.redis_port, db=2)
+r2_succeed = redis.Redis(host=general.redis_host, port=general.redis_port, db=2, decode_responses=True)
+
+
+# proxyip管理
+def add_proxy_ip(ip):
+    r0_waitting.zadd("proxyzip", ip, 5)
+
+
+def get_ip():
+    res = r0_waitting.zrangebyscore('proxyzip', 0, 6)
+    size = len(res)
+    idx = int(random.random() * size)
+    return eval(res[idx])
+
+
+def decrease_ip(ip):
+    r0_waitting.zincrby("proxyzip", ip, -1)
+    score = r0_waitting.zscore("proxyzip", ip)
+    if score <= 0:
+        r0_waitting.zrem("proxyzip", ip)
+
+
+def remove_all_ip():
+    r0_waitting.delete("proxyzip")
+
+
+def get_proxy_size():
+    return r0_waitting.zcard("proxyzip")
+# ------------------------------------ ip
 
 
 def add_failed_url(table,url):
@@ -29,8 +58,7 @@ def empty_waiting_url(table):
 
 def get_waiting_url(table):
     new_url = r0_waitting.spop(table)
-    new_url = str(new_url, encoding='utf-8')
-    print(r0_waitting.scard(table))
+    # print(r0_waitting.scard(table))
     return new_url
 
 
@@ -106,5 +134,5 @@ def delete_hash_kv(urlToken):
 
 
 def get_hash_kv(urlToken, key):
-    return int(r0_waitting.hget(urlToken, key).decode())
+    return int(r0_waitting.hget(urlToken, key))
 
