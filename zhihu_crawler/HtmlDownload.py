@@ -155,6 +155,7 @@ class HtmlDownload(object):
         cnt = 0
         total_page = each_thread_page if each_thread_page != 0 else 1  # 每一个线程最大执行页面数量
         list_dict = []
+        user_focus = {}
         phrase += '?'
         time.sleep(0.5)
         time_try = 0
@@ -182,6 +183,8 @@ class HtmlDownload(object):
                     return  False
                 continue
             data = data['entities'][name]
+            user_focus['urlToken'] = urlToken
+            user_focus['following'] = []
             if name == 'columns':
                 for k, v in data.items():  # 拿到每一页 columns 或者 topics
                     if DataManager.judge_is_setmember(general.focus_list_success_url, k) is True:
@@ -195,6 +198,7 @@ class HtmlDownload(object):
                                      'articlesCount': v['articlesCount'],
                                      'title': v['title'], 'description': v['description'], 'followers': v['followers']}
                     list_dict.append(focus)
+                    user_focus['following'].append({'urlToken': k, 'title': v['title']})
             else:
                 for k, v in data.items():
                     if DataManager.judge_is_setmember(general.focus_list_success_url, k) is True:
@@ -204,8 +208,13 @@ class HtmlDownload(object):
                     focus['urlToken'] = k
                     focus['info'] = {'name': v['name'], 'introduction': v['introduction'],'avatarUrl': v['avatarUrl']}
                     list_dict.append(focus)
+                    user_focus['following'].append({'urlToken': k, 'name': name})
         if len(list_dict) > 0:
             DataManager.mongo_following_output_data(table, list_dict)
+        if table == 'topics_info':
+            DataManager.mongo_output_data("following_topics", user_focus, extra_field='following')
+        else:
+            DataManager.mongo_output_data("following_columns", user_focus, extra_field='following')
         return True
 
 
@@ -223,7 +232,6 @@ def download_follower(urlToken, phrase, table, total_num, type_):  # total_num �
             for i in range(int(half_page+0.5)):
                 pool = multiprocessing.Pool(processes=general.min_process_num)
                 for j in range(general.min_process_num):
-                    print("1")
                     pool.apply_async(ht.thread_download_follower, args=(urlToken, phrase, table, start_page, 1))
                     start_page += 1
                 pool.close()
