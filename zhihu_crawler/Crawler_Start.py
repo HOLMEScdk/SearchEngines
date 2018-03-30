@@ -6,20 +6,17 @@ import socket
 import general
 import DataManager
 import HtmlDownload
-import Open_Proxy_
 import os
 import time
 import multiprocessing
-from datetime import datetime
 socket.setdefaulttimeout(general.set_socket_timeout)
 html_download = HtmlDownload.HtmlDownload()
-# proxy_pool = Open_Proxy_.ProxyPool()
 
 
 def start_crawler():
     # print("进程号%s 时间%s"%(os.getpid(), datetime.now()))
     if DataManager.empty_waiting_url(general.waiting_url) is True:
-        time.sleep(general.process_waitting)
+        time.sleep(general.waiting_time)
         general.logger.warn('Redis 无可爬取URL 当前进程睡眠\n')
     urlToken = DataManager.get_waiting_url(general.waiting_url)
     if urlToken is None:
@@ -27,7 +24,6 @@ def start_crawler():
     # urlToken = str(new_token, encoding='utf-8')  # !!!!!!!!!!!!!!encoding
     general.logger.warn("开始访问用户 %s \n" % urlToken)
     now_cnt = general.Max_Limit
-    user_followers = 0
     ip = DataManager.get_ip()
     html_download.set_proxy_pool(ip)
     while now_cnt > 0:
@@ -37,13 +33,13 @@ def start_crawler():
             return
         try:
             # crawl = Crawler_Init.Craweler()
-            flag = get_new_person_info(urlToken)
+            flag, user_followers = get_new_person_info(urlToken)
             if flag == "DataBaseExists":  # 存储过数据
                 general.logger.info("%s 数据库已存储过\n" % urlToken)
                 return
             elif flag == "PageError":
                  # 不能跳出去 要10次都None 那就结束
-                time.sleep(0.5)
+                time.sleep(0.1)
                 continue
             elif flag == "SetPrivacy":
                 break
@@ -58,62 +54,35 @@ def start_crawler():
         general.logger.error('%d ALL FAILED，put into in the fail set %s \n' % (general.Max_Limit, urlToken))
         DataManager.add_failed_url(general.failed_url, urlToken)
         return False
-    # Succeed
     return False
 
 
 def get_new_person_info(urlToken, crawler=None):
      # 理解opener 与 Request
-    # html = crawl.get_html(url_act)
     data = html_download.download(urlToken, "activities")  # 返回json
     if data.get("entities") is None:  # 页面获取出错
-        return "PageError"
-    if len(data['entities']['users']) == 0:  # 用户设置了权限
-        return "SetPrivacy"
+        general.logger.info("%s Set Privacy" % urlToken)
+        return "PageError", 0
+    if len(data['entities']['users']) == 0 or data['entities']['users'].get(urlToken) is None:  # 用户设置了权限
+        DataManager.add_waiting_url(general.denial_url_per, urlToken)  # 等待后续调优继续爬取
+        general.logger.info("%s 设置隐私权限" % urlToken)
+        return "SetPrivacy", 0
     user = data['entities']['users'][urlToken]
     # person = {}
+    followers = 0
     try:
-        person = store_mongo_person_info(urlToken, user)
+        person, followers = store_mongo_person_info(urlToken, user)
         if person is False:  # 不用再次访问他的列表了
-            return "DataBaseExists"
+            return "DataBaseExists", 0
     except Exception as e:
         general.logger.warn("%s 获取个人信息出现异常 用户%s\n" % (e, urlToken))
-    # 暂未解决的性能问题 调度上不好控制 需要爬取两次所有用户的following follower  将就过了
-    # store_focus_list(urlToken, "Following", general.failed_following, user["followerCount"])
-    # store_focus_list(urlToken, "Follower", general.failed_follower, user["followingCount"])
-    return "Succeed"
+    return "Succeed", followers
 
-'''
-def store_focus_list(urlToken, phrase, set_name, total_num):
-    cnt = 10
-    while cnt > 0:
-        cnt -= 1
-        flag = False
-        try:
-            if phrase == 'Following':
-                if DataManager.mongo_search_data('follower_info', urlToken) is False:
-                    flag = HtmlDownload.download_follower(urlToken, 'followers', "follower_info", total_num)
-            else:
-                if DataManager.mongo_search_data('following_info', urlToken) is False:
-                    flag = HtmlDownload.download_follower(urlToken, 'following', "following_info", total_num)
-            if flag is True:
-                general.logger.info("%s %s 全部添加进redis中" % (urlToken, phrase) )
-                break
-        except Exception as e:
-            general.logger.warn("%s 获取个人%s列表出现异常 用户%s 剩余次数 %d\n" % (e, phrase, urlToken, cnt))
-            time.sleep((10 - cnt) * 2)
-    else:  # failed
-        DataManager.add_failed_url(set_name, urlToken)
-
-'''
-'''
-存储个人信息 及 其following/followers
-'''
 
 
 def store_mongo_person_info(urlToken, user):
     if DataManager.mongo_search_data('person_table', urlToken) is True:
-        return False
+        return False, 0
     person = {}
     person['urlToken'] = urlToken
     person['userType'] = user['userType']
@@ -203,19 +172,19 @@ def store_mongo_person_info(urlToken, user):
         'followingCount': person['followingCount']
     }
     DataManager.store_hash_kv(urlToken, attr_dict)
-    return True
+    return True, person['followerCount']
 
 
 if __name__ == '__main__':
     # DataManager.add_waiting_url(general.waiting_url, "bing-po-yin-zhen-36")
     # DataManager.add_waiting_url(general.waiting_url, "yang-dong-liang-6")
     # DataManager.add_waiting_url(general.waiting_url, "jieyan")
-    # DataManager.add_waiting_url(general.waiting_url, "hu-mars")
+    DataManager.add_waiting_url(general.waiting_url, "hu-mars")
     # DataManager.add_waiting_url(general.waiting_url, "python_shequ")
-    DataManager.add_waiting_url(general.waiting_url, "rong-ma-ma-70")
+    # DataManager.add_waiting_url(general.waiting_url, "rong-ma-ma-70")
     while True:
         while DataManager.empty_waiting_url(general.waiting_url) is True:  # 没有待爬取的url scard equal len
-            time.sleep(general.process_waitting * 5)
+            time.sleep(general.waiting_time * 5)
             general.logger.warn('Redis 无可爬取URL 睡眠\n')
             print("睡眠")
         while DataManager.empty_waiting_url(general.waiting_url) is False:
@@ -225,6 +194,7 @@ if __name__ == '__main__':
                     pool.apply_async(start_crawler, args=())
                 pool.close()
                 pool.join()
+                time.sleep(1)
                 # complet_person, urlToken = Crawler_Start.start_crawler()
             except Exception as e:
                 general.logger.info("%s start_crawler 异常" % e)

@@ -21,30 +21,32 @@ r2_succeed = redis.Redis(host=general.redis_host, port=general.redis_port, db=2,
 
 
 # proxyip管理
-def add_proxy_ip(ip):
-    r0_waitting.zadd("proxyzip", ip, 5)
+def add_proxy_ip(ip,table='proxyzip'):
+    r0_waitting.zadd(table, ip, 10)
 
 
-def get_ip():
-    res = r0_waitting.zrangebyscore('proxyzip', 0, 6)
+def get_ip(table='proxyzip'):
+    res = r0_waitting.zrangebyscore(table, 0, 11)
     size = len(res)
     idx = int(random.random() * size)
+    if size == 0:
+        return None
     return eval(res[idx])
 
 
-def decrease_ip(ip):
-    r0_waitting.zincrby("proxyzip", ip, -1)
-    score = r0_waitting.zscore("proxyzip", ip)
-    if score <= 0:
-        r0_waitting.zrem("proxyzip", ip)
+def decrease_ip(ip, flag=0,table='proxyzip'):
+    r0_waitting.zincrby(table, ip, -1)
+    score = r0_waitting.zscore(table, ip)
+    if score <= 0 or flag == 1:  # flag == 1 need to be deleted
+        r0_waitting.zrem(table, ip)
 
 
-def remove_all_ip():
-    r0_waitting.delete("proxyzip")
+def remove_all_ip(table='proxyzip'):
+    r0_waitting.delete(table)
 
 
-def get_proxy_size():
-    return r0_waitting.zcard("proxyzip")
+def get_proxy_size(table='proxyzip'):
+    return r0_waitting.zcard(table)
 # ------------------------------------ ip
 
 
@@ -63,7 +65,7 @@ def get_waiting_url(table):
 
 
 def add_waiting_url(table, url):
-    if judge_is_setmember(general.person_success_url, url) is False:
+    if table == general.denial_url or table == general.denial_url_per or judge_is_setmember(general.person_success_url, url) is False:
         r0_waitting.sadd(table, url)
     return True
 
