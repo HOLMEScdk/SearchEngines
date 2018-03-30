@@ -11,7 +11,7 @@ import DataManager
 
 class ProxyPool():
     host = 'http://127.0.0.1:8000/'  # 代理池请求IP
-    # host = 'http://piping.mogumiao.com/proxy/api/get_ip_al?appKey=bf1a22264aba47caa012532adc36a916&count=20&expiryDate=0&format=1'
+    # host = 'http://piping.mogumiao.com/proxy/api/get_ip_al?appKey=***&count=20&expiryDate=0&format=1'
     ip_pool = []
 
     def __init__(self):
