@@ -27,7 +27,7 @@ def start_crawler():
     ip = DataManager.get_ip()
     html_download.set_proxy_pool(ip)
     while now_cnt > 0:
-        now_cnt -= 1
+        now_cnt -= 1  # 更新的时候删掉这个就行了 不断插入，等待删除？
         if DataManager.judge_is_setmember(general.person_success_url, urlToken):
             general.logger.warn("%s redis已经存在该用户\n" % urlToken)
             return
@@ -77,7 +77,6 @@ def get_new_person_info(urlToken, crawler=None):
     except Exception as e:
         general.logger.warn("%s 获取个人信息出现异常 用户%s\n" % (e, urlToken))
     return "Succeed", followers
-
 
 
 def store_mongo_person_info(urlToken, user):
@@ -178,7 +177,7 @@ def store_mongo_person_info(urlToken, user):
 if __name__ == '__main__':
     # DataManager.add_waiting_url(general.waiting_url, "bing-po-yin-zhen-36")
     # DataManager.add_waiting_url(general.waiting_url, "yang-dong-liang-6")
-    # DataManager.add_waiting_url(general.waiting_url, "jieyan")
+    DataManager.add_waiting_url(general.waiting_url, "jieyan")
     DataManager.add_waiting_url(general.waiting_url, "hu-mars")
     # DataManager.add_waiting_url(general.waiting_url, "python_shequ")
     # DataManager.add_waiting_url(general.waiting_url, "rong-ma-ma-70")

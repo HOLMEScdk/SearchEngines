@@ -127,6 +127,59 @@ def mongo_following_output_data(table, list_dict):
     return True
 
 
+# 返回urlToken
+def get_table(table):
+    zhihu_collection = mongo_crawler[table]
+    queryargs = dict()
+    projection = dict()
+    try:
+        if table == 'topics_info': #找到该字段为空的数据
+            queryargs = {'followers': None}
+            projection = {'urlToken': True, '_id': False, 'info.name': True}
+        elif table == 'person_table':
+            queryargs = {'name': None}
+            projection = {'urlToken': True, '_id': False}
+        search_res = zhihu_collection.find(queryargs, projection)
+        return search_res
+    except Exception as e:
+        print(e)
+
+
+def add_missing_part(table, missing_dict):
+    zhihu_collection = mongo_crawler[table]
+    try:
+        if table == 'topics_info':
+            for each in missing_dict:
+                zhihu_collection.update(
+                    {'urlToken': each},
+                    {'$set':{'followers': missing_dict[each]['followers'], 'questions': missing_dict[each]['questions'],
+                             'Time': datetime.now()}}
+                )
+    except Exception as e:
+        print(e)
+
+
+def find_json(url):  # 增加table中的name
+    zhihu_collection = mongo_crawler['person_json']
+    zhihu_collection2 = mongo_crawler['person_table']  # person的个人信息
+    try:
+        query = {'urlToken': url}
+        projection = {'_id':False, 'name':True}
+        search = zhihu_collection.find(query, projection)  # 找到对应的名字
+        name = ""
+        for each in search:
+            zhihu_collection2.update(
+                {'urlToken':url},
+                {'$set': {'name': each['name'], 'Time': datetime.now()}}
+            )
+            name = each['name']
+        return name
+    except Exception as e:
+        print(e)
+
+
+
+
 def store_hash_kv(urlToken, attr_dict):
     r0_waitting.hmset(urlToken, attr_dict)
 

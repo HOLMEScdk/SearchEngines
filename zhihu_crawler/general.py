@@ -41,7 +41,7 @@ mongo_port = 27017					    # mongodb 主机端口
 
 # 配置日志
 def set_logger():
-    LOG_FILE = 'crawler_3_30.log'
+    LOG_FILE = 'crawler_4_9.log'
 
     handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1024 * 1024 * 1024, backupCount=5)  # 实例化handler
     fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(message)s'

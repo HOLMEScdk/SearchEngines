@@ -62,9 +62,11 @@ class HtmlDownload(object):
         while cnt > 0:
             cnt -= 1
             try:
-                if postdata is not None:  # 需要encode
+                if postdata is not None and type(postdata) is not str:  # 需要encode
                     pos = parse.urlencode(postdata)
                     url = '%s/people/%s/%s%s' % (general.host, urlToken, page, pos)
+                if type(postdata) is str and postdata == 'topic':
+                    url = '%s/%s/%s/hot' % (general.host, postdata, urlToken)
                 req = request.Request(url, headers=self.headers)  # Request伪装
                 response = self.own_opener.open(req)  # 使用代理
                 htm = str(response.read(), encoding="utf-8")
@@ -258,7 +260,7 @@ def download_follower(urlToken, phrase, table, total_num, type_):
             time.sleep(1)
             if i % 50 == 0:
                 general.logger.warn('用户%s关注内容列表查询到第%d页'%(urlToken, i))
-            if i >= 100:
+            if i >= 2:
                 return True
                 #     pool.apply_async(ht.thread_download_follower, args=(urlToken, phrase, table, start_page, 1))
                 #     start_page += 1
@@ -291,7 +293,7 @@ def download_follower(urlToken, phrase, table, total_num, type_):
             time.sleep(1)
             if i % 50 == 0:
                 general.logger.warn('用户%s关注内容列表查询到第%d页'%(urlToken, i))
-            if i >= 100:
+            if i >= 2:
                 return True
             #     pool.apply_async(ht.thread_following_follower, (urlToken, phrase, table, start_page, 1, type_))
             #     start_page += 1

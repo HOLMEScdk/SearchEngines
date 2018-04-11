@@ -20,7 +20,7 @@ def store_focus_list(urlToken, phrase, set_name, total_num):
             if phrase == 'follower':
                 if DataManager.mongo_search_data('follower_info', urlToken) is False:
                     pass
-                    # flag = HtmlDownload.download_follower(urlToken, 'followers', "follower_info", total_num, 'user')
+                    flag = HtmlDownload.download_follower(urlToken, 'followers', "follower_info", total_num, 'user')
             elif phrase == 'following':
                 if DataManager.mongo_search_data('following_info', urlToken) is False:
                     pass
