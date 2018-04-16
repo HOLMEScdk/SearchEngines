@@ -1,0 +1,125 @@
+html{
+    width: 100%;
+    height: 100%;
+    padding: 0%;
+}
+body {
+    width: 100%;
+    height: 100%;
+    background-color:rgb(247, 238, 214);
+    background-size: cover;
+}
+
+#main{
+    width: 100%;
+    height: 100%;
+    /* background:url('background2.jpg') no-repeat center center; */
+    /* background-size: cover; */
+    overflow: auto;
+    /* display: none; */
+}
+
+#main_canvas{
+    position: fixed;
+    top: 0%;
+    left: 0%;
+}
+
+#index_item{
+    z-index: 10;
+    position: relative;
+    left: 0;
+    top: 0;
+    text-align: center
+}
+
+#search_input{
+    BACKGROUND-COLOR: transparent;
+    border-width:0px 0px 2px 0px;
+    text-align:center;
+    width: 50%;
+    font-size: 56px;
+    color: white
+}
+
+#result{
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+    background:url('../img/background4.jpg') top center;
+    background-attachment: fixed;
+    zoom: 1; 
+    font-size: 0px;
+}
+
+#result_head{
+    background:url('../img/background4.jpg') no-repeat center center;
+}
+
+#result_head_search{
+    text-align: center;
+    width: 100%;
+}
+
+#result_head_search_icon{
+    height:80px;
+    vertical-align:middle;
+}
+
+#result_head_search_input{
+    border-radius: 20px;
+    vertical-align:middle;
+    width:50%;
+    height:40px;
+    border:0px;
+    padding:0 20px;
+    font-size:20px;
+}
+
+#result_list{
+    text-align: center;
+    margin: 0px 0px 0px 0px;
+    padding: 100px 0px 0px 0px;
+    height: 100%;
+    border: solid;
+    width: 100%;
+}
+
+#result_list_canvas{
+    margin: 0px auto;
+}
+
+#result_left{
+    position: fixed;
+    width: 600px;
+    top: 80px;
+    left: 0px;
+    width: 30%;
+    height: 100%;
+    background: white;
+}
+
+
+#result_left_list{
+    overflow: scroll;
+    position: relative;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    display: inline-block;
+    background: white;
+    -webkit-transition: width 1s ease;
+    -moz-transition: width 1s ease;
+    -o-transition: width 1s ease;
+    transition: width 1s ease;
+}
+
+#result_left_head_photo{
+    width: 100px;
+    height: 100px;
+    border: solid;
+}
+
+#result_left_head_name{
+
+}

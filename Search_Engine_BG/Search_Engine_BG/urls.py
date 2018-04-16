@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from zhihu import views
 urlpatterns = [
-    path('', views.search),
+    path('', views.init),
+    path('search/', views.search),
     path('admin/', admin.site.urls),
 ]
