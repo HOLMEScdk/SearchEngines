@@ -29,12 +29,12 @@
 
     <!-- 主搜索界面 -->
     <div id="main" class="">
-        <canvas id="main_canvas">123132</canvas>
+        <canvas id="main_canvas"></canvas>
         <div id="index_item">
             <br/><br/><br/><br/><br/><br/><br/>
             <img id="index_img" src="{% static '/img/index_niupigu.gif' %}">
             <br/><br/><br/>
-            <label style="color:white;font-size:48px;">晚上好，您想搜索什么呢?</label>
+            <label id="index_label" style="color:white;font-size:48px;">晚上好，您想搜索什么呢?</label>
             <br/>
             <input id="search_input" style="border: bottom width 2px;" />
             <br/><br/><br/>
@@ -43,13 +43,20 @@
 
     <script>
         $("#main").hide();
+        now = new Date(),hour = now.getHours()
+        if(hour < 11){$("#index_label").text("上午好，"+welcomeText);}
+        else if(hour < 13){$("#index_label").text("中午好，"+welcomeText);}
+        else if (hour < 17){$("#index_label").text("下午好，"+welcomeText);}
+        else{$("#index_label").text("晚上好，"+welcomeText);} 
     </script>
 
     <!-- 星空图实现代码 -->
     <script>
         function drawStartCanvas(){
+            // $("#main_canvas").remove();
+            // new_canvas = $("<canvas id='main_canvas'></canvas>");
+            // $("#index_item").before(new_canvas);
             "use strict";
-
             var canvas = document.getElementById('main_canvas'),
             ctx = canvas.getContext('2d'),
             w = canvas.width = window.innerWidth,
@@ -58,7 +65,6 @@
             stars = [],
             count = 0,
             maxStars = 1200;
-            ctx.clearRect(0,0,canvas.width,canvas.height);  
             var canvas2 = document.createElement('canvas'),
             ctx2 = canvas2.getContext('2d');
             canvas2.width = 100;
@@ -69,12 +75,10 @@
             gradient2.addColorStop(0.1, 'hsl(' + hue + ', 61%, 33%)');
             gradient2.addColorStop(0.25, 'hsl(' + hue + ', 64%, 6%)');
             gradient2.addColorStop(1, 'transparent');
-
             ctx2.fillStyle = gradient2;
             ctx2.beginPath();
             ctx2.arc(half, half, half, 0, Math.PI * 2);
             ctx2.fill();
-
             // End cache
 
             function random(min, max) {
@@ -110,7 +114,6 @@
                 count++;
                 stars[count] = this;
             }
-
             Star.prototype.draw = function() {
                 var x = Math.sin(this.timePassed) * this.orbitRadius + this.orbitX,
                     y = Math.cos(this.timePassed) * this.orbitRadius + this.orbitY,
@@ -217,14 +220,6 @@
                         },
                         animation: false,
                         series: [{
-                            categories: [{
-                                name: '朋友',
-                                itemStyle: {
-                                    normal: {
-                                        color: "#4592FF",
-                                    }
-                                }
-                            }],
                             type: 'graph',
                             layout: 'force',
                             symbol: "circle",
@@ -242,14 +237,6 @@
                                     formatter: "{c}"
                                 }
                             },
-                            categories: [{
-                                name: '朋友',
-                                itemStyle: {
-                                    normal: {
-                                        color: "#4592FF",
-                                    }
-                                }
-                            }],
                             lineStyle: {
                                 normal: {
                                     opacity: 1,
@@ -295,8 +282,17 @@
                         }
                     }
                     myChart.setOption(option);
-                    myChart.on('click',function(param){
-                        var name=param.name;
+                    myChart.on('mousedown',function(param){
+                        var name=param.data.name;
+                        var urlToken = param.data.urlToken;
+                        param.event.event.cancelBubble = true;
+                        param.event.cancelBubble = true;
+                        if(!$("#result_left").is(":hidden")&&$("#result_left_head_name_p")[0].textContent==name){    
+                            result_left_show();
+                        }else{
+                            result_left_show();
+                        }
+                        $("#result_left_head_name_p")[0].textContent = name;
                     });
                     $("#result_left_head_name_p")[0].textContent = data['first'][0]['name'];
                 })  
@@ -309,6 +305,7 @@
             $("#main").show();
             $("#result").removeClass("animated slideInRight");
             $("#result").hide();
+            drawStartCanvas();
         })
     </script>
 
@@ -316,8 +313,8 @@
     <script>
         var Xindex=0;
         var dom = document.getElementById("result_list_canvas");
-        dom.style.width = 780 + 'px';
-        dom.style.height = 600 + 'px';
+        dom.style.width = window.innerWidth - 20 + 'px';
+        dom.style.height = window.innerHeight - 20 + 'px';
         var myChart = echarts.init(document.getElementById("result_list_canvas"));
     </script>
 
@@ -374,20 +371,27 @@
             var height = document.body.scrollHeight;
             var logo_wrap = document.getElementById("logo_wrap");
             var margin_top = (height - 250) / 2;
+            var dom = document.getElementById("result_list_canvas");
+            dom.style.width = window.innerWidth - 20 + 'px';
+            dom.style.height = window.innerHeight - 5 + 'px';
+            myChart.resize(); 
             logo_wrap.style.marginTop = (margin_top) + "px";
             if(!$("#main").is(":hidden")){
                 drawStartCanvas();
             }
         };
-        // $("#result_list").click(function(){
-        //     if(!$("#result_left").is(":hidden")){
-        //         $("#result_left").animate({
-        //             left:'-'+$("#result_left").width()+'px'
-        //         },1000,function(){
-        //             $("#result_left").hide();
-        //         });
-        //     }
-        // });
+        $("#result_list").mousedown(function(indexdown){
+            downX = indexdown.pageX;
+            downY = indexdown.pageY;
+            $("#result_list").mouseup(function(indexup){
+                if(downX-indexup.pageX == 0 && downY - indexup.pageY == 0){
+                    result_left_hide();
+                }
+                else{
+
+                }
+            });
+        });
     </script>
 
     <!-- 全部加载完毕后 -->
@@ -395,6 +399,28 @@
         $("#loading").hide();
         $("#main").show();
         $("#main").addClass("animated slideInDown");
+    </script>
+
+    <!-- 侧边栏动画函数实现 -->
+    <script>
+        function result_left_hide(){
+            $("#result_left").animate({
+                left:'-'+$("#result_left").width()+'px'
+            },1000,function(){
+                $("#result_left").hide();
+            $("#result_left").stop(true, true);
+            });
+        }
+
+        function result_left_show(){
+            $("#result_left").show();
+            $("#result_left").stop(true, true);
+            $("#result_left").animate({
+                    left:0+'px'
+                },1000,function(){
+                $("#result_left").show();
+            });
+        }
     </script>
 
 </body>
