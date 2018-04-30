@@ -4,11 +4,14 @@
 from search_engine import gengeral
 from search_engine import DB_Manager
 import time
-if __name__ == '__main__':
-    t = time.time()
-    DB_Manager.update_rank()
-    table_info = DB_Manager.get_all_table_info('top_person')
-    for i, di in enumerate(table_info):
-        table_info[i]['number'] = table_info[i]['followerCount']
-    print(table_info)
-    print(t-time.time())
+cnt = 1
+while True:
+    '''
+    update the top 20 of user and columns and topics
+    '''
+    DB_Manager.update_person_rank()
+    DB_Manager.get_sort_table_key('columns_info', 'info.followers')
+    DB_Manager.get_sort_table_key('topics_info', 'followers')
+    print("Update %d", cnt)
+    cnt += 1
+    time.sleep(600)

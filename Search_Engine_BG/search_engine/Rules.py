@@ -6,7 +6,7 @@ graph_info = ['图','关系图', '模型', '层次','层次图', '结构', '关�
 individual_info = ['信息', '基本信息', '介绍']
 # 到后期放到redis中每个人的名字
 user = []
-with open('user_name.txt', 'r', encoding='uft-8') as f:
+with open('user_name.txt', 'r', encoding='utf-8') as f:
     for each in f.readlines():
         x = each.split(' ')
         user.append(x[0])

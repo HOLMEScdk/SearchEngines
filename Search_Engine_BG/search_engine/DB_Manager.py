@@ -16,7 +16,7 @@ def judge_is_setmember(table, url):
     return r2_succeed.sismember(table, url) is True
 
 
-def get_top_rank(table, f_begin=0, f_end=20, score=False):
+def get_top_person_rank(table, f_begin=0, f_end=20, score=False):
     return r2_succeed.zrevrange(table, 0, -1, withscores=score)[f_begin:f_end]
 
 
@@ -32,6 +32,13 @@ def search_mongo(table, val, key):  # 执行查询
 
 
 def find_mongo(kind, val, key):  # 传入值与键查询 为topic column 提供接口
+    '''
+
+    :param kind: 数据库表名（类型）
+    :param val: 值
+    :param key: 键
+    :return: 查找的结果集
+    '''
     try:
         res = None
         if kind == 'topic':
@@ -56,14 +63,21 @@ def get_random_neighbor(url, table):  # 得到对应人的follower/following
         return []
     for each_li in res: # list
         for each in each_li[search_key]:
-            if judge_is_setmember(gengeral.person_success_url, each) is True:
+            if judge_is_setmember(gengeral.person_success_url, each) is True:  # 保证一下层数
                 res_list.append(each)
+            # res_list.append(each)
             if len(res_list) >= 10:
                 break
     return res_list
 
 
-def expand_level(kind, token_list):  # 扩展每层的人他的节点的信息
+def expand_level(kind, token_list):
+    '''
+
+    :param kind:  类型
+    :param token_list: 每层的每个点的信息
+    :return: 每个人的结果信息列表 与 urklToken 列表
+    '''
     table = ''
     if kind == 'user':
         table = 'follower_info'
@@ -96,18 +110,21 @@ def expand_level(kind, token_list):  # 扩展每层的人他的节点的信息
 def store_mongo(table, msg_li):
     collection = mongo_crawler[table]
     cnt = collection.find({}).count()
-    if not cnt:
+    if cnt:
         collection.delete_many({})
     collection.insert_many(msg_li)
 
 
-def update_rank():
-    li = get_top_rank(gengeral.zset_success_url)
+def update_person_rank():
+    '''
+    :return: 存储followers的人
+    '''
+    li = get_top_person_rank(gengeral.zset_success_url)
     msg_li = []
     for token in li:
-        msg = search_mongo('person_table', token, 'urlToken')
+        msg = search_mongo('person_table', token, 'urlToken')  # 用token找每一个人的msg 然后存进去
         msg_li.append(msg[0])
-    store_mongo('top_person', msg_li)
+    store_mongo('top_persons', msg_li)
 
 
 def get_all_table_info(table):
@@ -126,13 +143,18 @@ def get_sort_table_key(table, key):
     res = []
     if table == 'columns_info':
         res = collection.find({}, {'_id': False, 'Time': False})
-        ma = max(20, res.count())
+        ma = min(20, res.count())
         res = res.sort(key, pymongo.DESCENDING)[:ma]
+        store_mongo('top_columns', res)
+    elif table == 'topics_info':
+        res = collection.find({'followers': {'$ne': None}}, {'_id': False, 'Time': False})
+        ma = min(20, res.count())
+        res = res.sort(key, pymongo.DESCENDING)[:ma]
+        store_mongo('top_topics', res)
     return res
 
 
 if __name__ == '__main__':
-    pass
-    # res = get_sort_table_key('columns_info', 'info.followers')
-    # for each in res:
-    #     print(each)
+    res = get_sort_table_key('columns_info', 'info.followers')
+    for each in res:
+        print(each)

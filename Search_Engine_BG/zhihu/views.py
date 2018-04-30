@@ -13,12 +13,11 @@ jieba.load_userdict('user_name.txt')
 def init(request):
     return render(request, 'index1.html')
 
+
 def search(request):
     res_dict = dict()
     if request.method == 'GET':
-        text = request.GET.get('test') # input name
-        if text == '' or text is None:
-            return HttpResponse(json.dumps({'NONE': True}))
+        text = request.GET.get('') # input name
         cut = jieba.cut_for_search(text)
         joint_cut = ','.join(cut)
         list_text = [x for x in re.split(r'[\s!@%^,;\n]',joint_cut) if x]  # 测试数据
@@ -33,5 +32,5 @@ def search(request):
             pass
         if res_dict is None:
             return HttpResponse(json.dumps({'NONE': True}))
-        print(res_dict)
         return HttpResponse(json.dumps(res_dict))
+    return render(request, 'index.html')
