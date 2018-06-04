@@ -18,6 +18,10 @@ from django.urls import path
 from zhihu import views
 urlpatterns = [
     path('', views.init),
-    path('search/', views.search),
+    path('search', views.search),
+    path('relation', views.relation),
+    path('change', views.change),
+    path('update', views.update),
+    path('getlist', views.getlist),
     path('admin/', admin.site.urls),
 ]

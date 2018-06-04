@@ -8,56 +8,77 @@
     <meta charset="UTF-8">
     <meta http-equiv="Access-Control-Allow-Origin" content="*">
     <link rel="stylesheet" type="text/css" href="{% static '/css/bootstrap.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static '/css/index1.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static '/css/animate.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static '/css/index1.css' %}">
     <script type="text/javascript" src="{% static '/js/jquery-3.3.1.min.js' %}"></script>
     <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"></script>
+    <script type="text/javascript" src="{% static '/js/sonic.js' %}"></script>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script>
         var welcomeText = "您想搜索什么呢?";
         temptemptemp = "";
+        globaldata = "";
+        alldata = "";
+        host_all = "http://10.66.3.43:8000";
+        photo_url = "http://10.66.3.45/";
     </script>
+    <style>
+        em{
+            font-style: normal;
+            color:red;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- 加载界面 -->
-    <div id="loading" class="wrap" align="center" style="widows:100%;height:100%;">
-        <img id="logo_wrap" src="{% static '/img/liukanshan-huaxin.gif' %}" />
+<!-- 加载界面 -->
+<div id="loading" class="wrap" align="center" style="widows:100%;height:100%;">
+    <img id="logo_wrap" src="{% static '/img/liukanshan-huaxin.gif' %}"/>
+    <br/>
+    <br/>
+    <label style="font-size:150%">资源加载中，马上就好</label>
+</div>
+
+<!-- 主搜索界面 -->
+<div id="main" class="">
+    <canvas id="main_canvas"></canvas>
+    <div id="index_item">
+        <br/><br/><br/><br/><br/><br/><br/>
+        <img id="index_img" src="{% static '/img/index_niupigu.gif' %}">
+        <br/><br/><br/>
+        <label id="index_label" style="color:white;font-size:48px;">晚上好，您想搜索什么呢?</label>
         <br/>
-        <br/>
-        <label style="font-size:150%">资源加载中，马上就好</label>
+        <input id="search_input" style="border: bottom width 2px;"/>
+        <br/><br/><br/>
     </div>
+</div>
 
-    <!-- 主搜索界面 -->
-    <div id="main" class="">
-        <canvas id="main_canvas"></canvas>
-        <div id="index_item">
-            <br/><br/><br/><br/><br/><br/><br/>
-            <img id="index_img" src="{% static '/img/index_niupigu.gif' %}">
-            <br/><br/><br/>
-            <label id="index_label" style="color:white;font-size:48px;">晚上好，您想搜索什么呢?</label>
-            <br/>
-            <input id="search_input" style="border: bottom width 2px;" />
-            <br/><br/><br/>
-        </div>
-    </div>
+<script>
+    $("#main").hide();
+    $("result_left").hide();
+    now = new Date(), hour = now.getHours()
+    if (hour < 11) {
+        $("#index_label").text("上午好，" + welcomeText);
+    }
+    else if (hour < 13) {
+        $("#index_label").text("中午好，" + welcomeText);
+    }
+    else if (hour < 17) {
+        $("#index_label").text("下午好，" + welcomeText);
+    }
+    else {
+        $("#index_label").text("晚上好，" + welcomeText);
+    }
+</script>
 
-    <script>
-        $("#main").hide();
-        now = new Date(),hour = now.getHours()
-        if(hour < 11){$("#index_label").text("上午好，"+welcomeText);}
-        else if(hour < 13){$("#index_label").text("中午好，"+welcomeText);}
-        else if (hour < 17){$("#index_label").text("下午好，"+welcomeText);}
-        else{$("#index_label").text("晚上好，"+welcomeText);} 
-    </script>
-
-    <!-- 星空图实现代码 -->
-    <script>
-        function drawStartCanvas(){
-            // $("#main_canvas").remove();
-            // new_canvas = $("<canvas id='main_canvas'></canvas>");
-            // $("#index_item").before(new_canvas);
-            "use strict";
-            var canvas = document.getElementById('main_canvas'),
+<!-- 星空图实现代码 -->
+<script>
+    function drawStartCanvas() {
+        // $("#main_canvas").remove();
+        // new_canvas = $("<canvas id='main_canvas'></canvas>");
+        // $("#index_item").before(new_canvas);
+        "use strict";
+        var canvas = document.getElementById('main_canvas'),
             ctx = canvas.getContext('2d'),
             w = canvas.width = window.innerWidth,
             h = canvas.height = window.innerHeight,
@@ -65,23 +86,24 @@
             stars = [],
             count = 0,
             maxStars = 1200;
-            var canvas2 = document.createElement('canvas'),
+        var canvas2 = document.createElement('canvas'),
             ctx2 = canvas2.getContext('2d');
-            canvas2.width = 100;
-            canvas2.height = 100;
-            var half = canvas2.width / 2,
+        canvas2.width = 100;
+        canvas2.height = 100;
+        var half = canvas2.width / 2,
             gradient2 = ctx2.createRadialGradient(half, half, 0, half, half, half);
-            gradient2.addColorStop(0.025, '#fff');
-            gradient2.addColorStop(0.1, 'hsl(' + hue + ', 61%, 33%)');
-            gradient2.addColorStop(0.25, 'hsl(' + hue + ', 64%, 6%)');
-            gradient2.addColorStop(1, 'transparent');
-            ctx2.fillStyle = gradient2;
-            ctx2.beginPath();
-            ctx2.arc(half, half, half, 0, Math.PI * 2);
-            ctx2.fill();
-            // End cache
+        gradient2.addColorStop(0.025, '#fff');
+        gradient2.addColorStop(0.1, 'hsl(' + hue + ', 61%, 33%)');
+        gradient2.addColorStop(0.25, 'hsl(' + hue + ', 64%, 6%)');
+        gradient2.addColorStop(1, 'transparent');
+        ctx2.fillStyle = gradient2;
+        ctx2.beginPath();
+        ctx2.arc(half, half, half, 0, Math.PI * 2);
+        ctx2.fill();
 
-            function random(min, max) {
+        // End cache
+
+        function random(min, max) {
             if (arguments.length < 2) {
                 max = min;
                 min = 0;
@@ -94,334 +116,1000 @@
             }
 
             return Math.floor(Math.random() * (max - min + 1)) + min;
-            }
+        }
 
-            function maxOrbit(x, y) {
+        function maxOrbit(x, y) {
             var max = Math.max(x, y),
                 diameter = Math.round(Math.sqrt(max * max + max * max));
-                return diameter / 2;
-            }
-
-            var Star = function() {
-                this.orbitRadius = random(maxOrbit(w, h));
-                this.radius = random(60, this.orbitRadius) / 12;
-                this.orbitX = w / 2;
-                this.orbitY = h / 2;
-                this.timePassed = random(0, maxStars);
-                this.speed = random(this.orbitRadius) / 900000;
-                this.alpha = random(2, 10) / 10;
-
-                count++;
-                stars[count] = this;
-            }
-            Star.prototype.draw = function() {
-                var x = Math.sin(this.timePassed) * this.orbitRadius + this.orbitX,
-                    y = Math.cos(this.timePassed) * this.orbitRadius + this.orbitY,
-                    twinkle = random(10);
-
-                if (twinkle === 1 && this.alpha > 0) {
-                    this.alpha -= 0.05;
-                } else if (twinkle === 2 && this.alpha < 1) {
-                    this.alpha += 0.05;
-                }
-
-                ctx.globalAlpha = this.alpha;
-                ctx.drawImage(canvas2, x - this.radius / 2, y - this.radius / 2, this.radius, this.radius);
-                this.timePassed += this.speed;
-            }
-
-            for (var i = 0; i < maxStars; i++) {
-                new Star();
-            }
-
-            function animation() { 
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.globalAlpha = 0.8;
-                ctx.fillStyle = 'hsla(' + hue + ', 64%, 6%, 1)';
-                ctx.fillRect(0, 0,w, h);
-
-                ctx.globalCompositeOperation = 'lighter';
-                for (var i = 1, l = stars.length; i < l; i++) {
-                    stars[i].draw();
-                }
-
-                window.requestAnimationFrame(animation);
-            }
-            animation()
+            return diameter / 2;
         }
-        
-        drawStartCanvas();
-        
-    </script>
 
-    <!-- 搜索结果界面 -->
-    <div id="result">
-        <!-- 标题栏 -->
-        <div id="result_head">
-            <div id="result_head_search">
-                <img id="result_head_search_icon" src="{% static '/img/index_niupigu.gif' %}"></img>
-                <input id="result_head_search_input"></input>
-            </div>
-        </div>
-        <!-- 搜素结果列表 -->
-        <div id="result_list">
-            <div id="result_list_canvas">
-            </div>
-        </div>
-        <div id="result_left" style="border: solid;overflow-y: scroll;overflow-x: hidden;">
-            <div id="result_left_head" style="font-size: 20px">
-                <div id="result_left_head_photo" style="margin:20px auto 20px auto;"><p id="result_left_head_photo_p" style="text-align: center">图片</p></div>
-                <div id="result_left_head_name" style="margin:20px auto 20px auto;"><p id="result_left_head_name_p" style="text-align: center">name</p></div>
-                <div id="result_left_head_info" style="margin:20px auto 20px auto;border: solid;height: 800px;"><p id="result_left_head_info_p" style="text-align: center">其他信息</p></div>
-            </div>
+        var Star = function () {
+            this.orbitRadius = random(maxOrbit(w, h));
+            this.radius = random(60, this.orbitRadius) / 12;
+            this.orbitX = w / 2;
+            this.orbitY = h / 2;
+            this.timePassed = random(0, maxStars);
+            this.speed = random(this.orbitRadius) / 900000;
+            this.alpha = random(2, 10) / 10;
+
+            count++;
+            stars[count] = this;
+        }
+        Star.prototype.draw = function () {
+            var x = Math.sin(this.timePassed) * this.orbitRadius + this.orbitX,
+                y = Math.cos(this.timePassed) * this.orbitRadius + this.orbitY,
+                twinkle = random(10);
+
+            if (twinkle === 1 && this.alpha > 0) {
+                this.alpha -= 0.05;
+            } else if (twinkle === 2 && this.alpha < 1) {
+                this.alpha += 0.05;
+            }
+
+            ctx.globalAlpha = this.alpha;
+            ctx.drawImage(canvas2, x - this.radius / 2, y - this.radius / 2, this.radius, this.radius);
+            this.timePassed += this.speed;
+        }
+
+        for (var i = 0; i < maxStars; i++) {
+            new Star();
+        }
+
+        function animation() {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = 'hsla(' + hue + ', 64%, 6%, 1)';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.globalCompositeOperation = 'lighter';
+            for (var i = 1, l = stars.length; i < l; i++) {
+                stars[i].draw();
+            }
+
+            window.requestAnimationFrame(animation);
+        }
+
+        animation()
+    }
+
+    drawStartCanvas();
+
+</script>
+
+<!-- 搜索结果界面 -->
+<div id="result">
+    <!-- 标题栏 -->
+    <div id="result_head">
+        <div id="result_head_search">
+            <img id="result_head_search_icon" src="{% static '/img/index_niupigu.gif' %}"></img>
+            <input id="result_head_search_input"></input>
         </div>
     </div>
+    <!-- 搜素结果列表 -->
 
-    <script>
+    <div style="position: absolute;right: 20px;height: 80px;z-index: 999;font-size: 20px">
+        <p id="result_list_time" style="height: 80px;"></p>
+    </div>
+    <div id="result_list">
+        <div id="result_list_canvas">
+        </div>
+    </div>
+    <div id="result_left" style="overflow-y: scroll;overflow-x: hidden;display: none">
+        <div id="result_left_head" style="font-size: 20px">
+            <div class="panel">
+                <a id="result_left_head_a" href="javascript:void(0)" onclick="update(this)">更新</a>
+                <div id="result_left_head_photo" style="margin:20px auto 20px auto;">
+                    <img id="result_left_head_photo_p" class=""
+                         style="text-align: center;width: 100%;height: 100%"></img>
+                </div>
+                <div id="result_left_head_name" style="margin:20px auto 20px auto;">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#result_left_head_info">
+                        <p id="result_left_head_name_p" style="text-align: center"></p>
+                    </a>
+                </div>
+                <div id="result_left_head_line" style="margin:20px auto 20px auto;"><p id="result_left_head_line_p"
+                                                                                       style="text-align: center"></p>
+                </div>
+                <div style="margin:20px auto 20px auto;text-align: center;">
+                    <a id="result_left_head_check" href="javascript:void(0)" onclick="relation(this)">查看关系图</a>
+                </div>
+            </div>
+            <div id="result_left_head_info" class="panel-collapse collapse"
+                 style="margin:20px auto 20px auto;border: solid;min-height: 800px;"><p id="result_left_head_info_p"
+                                                                                        style="text-align: center">
+                其他信息</p></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body" id="myModelMain">
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+    $("#result").hide();
+</script>
+
+<script>
+    $('#search_input').bind('keyup', function (event) {
+        if (event.keyCode == "13") {
+            //样式变化
+            $("#main").removeClass("animated slideInDown");
+            $("#main").hide();
+            $("#result").show();
+            $("#result").removeClass("animated slideOutRight")
+            $("#result").addClass("animated slideInRight");
+            $("#result_head_search_input")[0].value = $("#search_input")[0].value
+
+
+            $("#result_list_time").text("")
+            $("#result_list_canvas").empty();
+            create_loading();
+            $("#result_left").hide();
+
+            $.ajax({
+                type: "GET",
+                url: host_all+"/search",
+                data: {test: $("#search_input").val()},
+                success: function (data) {
+                    ajax_return(data);
+                }
+            });
+        }
+    });
+
+    $("#result_head_search_input").bind('keyup', function (event) {
+        if (event.keyCode == "13") {
+            $("#result_list_time").text("")
+            $("#search_input")[0].value = $("#result_head_search_input")[0].value
+            $("#result_list_canvas").empty();
+            create_loading();
+            result_left_hide();
+            $.ajax({
+                type: "GET",
+                url: host_all+"/search",
+                data: {test: $("#search_input").val()},
+                success: function (data) {
+                    ajax_return(data);
+                }
+            });
+
+        }
+    });
+
+    $('#result_head_search_icon').click(function () {
+        $("#main").removeClass("animated slideOutLeft");
+        $("#main").addClass("animated slideInLeft");
+        $("#main").show();
+        $("#result").removeClass("animated slideInRight");
         $("#result").hide();
-    </script>
+        drawStartCanvas();
+    });
+</script>
 
-    <script>
-        $('#search_input').bind('keyup', function(event) {
-            if (event.keyCode == "13") {
-                //样式变化
-                $("#main").removeClass("animated slideInDown");
-                $("#main").hide();
-                $("#result").show();
-                $("#result").removeClass("animated slideOutRight")
-                $("#result").addClass("animated slideInRight");
-                $("#result_head_search_input")[0].value = $("#search_input")[0].value
-                
-                // $.ajax({
-                //     type: "GET",
-                //     url: "http://127.0.0.1:8000/search",
-                //     headers: {
-                //         'Access-Control-Allow-Origin': '*'
-                //     },
-                //     data: {test:$("#search_input").val()},
-                //     success: function(data){
-                //         console.log(data);
-                //     }
-                // });
-
-                $.getJSON("{% static '/json/res.json' %}",function(data){  
-                    option = {
-                        tooltip: {
-                            show: false,
-                            formatter:function(params){
-                                value = params;
-                                Xindex = value;
-                                return value.dataIndex;
-                            }
-                        },
-                        legend: {
-                            x: "center",
-                            data: ["朋友"]
-                        },
-                        animation: false,
-                        series: [{
-                            type: 'graph',
-                            layout: 'force',
-                            symbol: "circle",
-                            symbolSize: 50,
-                            roam: true, 
-                            edgeSymbol: ['circle', 'arrow'],
-                            edgeSymbolSize: [0, 10],
-                            focusNodeAdjacency: true, //划过只显示对应关系
-                            edgeLabel: {
-                                normal: {
-                                    show: true,
-                                    textStyle: {
-                                        fontSize: 20
-                                    },
-                                    formatter: "{c}"
-                                }
-                            },
-                            lineStyle: {
-                                normal: {
-                                    opacity: 1,
-                                    width: 2,
-                                    curveness: 0
-                                }
-                            },
-                            label: {
-                                normal: {
-                                    show: true
-                                }
-                            },
-                            force: {
-                                repulsion: 200
-                            },
-                            data: [],
-                            links: []
-                        }]
-                    };
-                    var tmp = {'name':data['first'][0]['name'],draggable:true,'urlToken':data['first'][0]['urlToken']};
-                    option.series[0].data.push(tmp);
-                    for(var i in data['second']){
-                        var tmp = {'name':data['second'][i]['name'],draggable:true,'urlToken':data['second'][i]['urlToken']};
-                        option.series[0].data.push(tmp);
-                        var linktmp = 
-                        {'source':data['second'][i]['name']
-                        ,'target':data['first'][0]['name']
-                        ,'lineStyle': {normal: {color: '#38f',curveness: 0}}
-                        ,'value':''};
-                        option.series[0].links.push(linktmp);
-                    }
-                    for(var i in data['third']){
-                        var tmp = {'name':data['third'][i]['name'],draggable:true,'urlToken':data['third'][i]['urlToken']};
-                        option.series[0].data.push(tmp);
-                        for(var j in data['second']){
-                            if(data['second'][j]['urlToken']==data['third'][i]['belong']){
-                                option.series[0].links.push(
-                                    {'source':data['third'][i]['name']
-                                    ,'target':data['second'][j]['name']
-                                    ,'lineStyle': {normal: {color: '#38f',curveness: 0}}
-                                    ,'value':''});
-                            }
-                        }
-                    }
-                    myChart.setOption(option);
-                    myChart.on('mousedown',function(param){
-                        var name=param.data.name;
-                        var urlToken = param.data.urlToken;
-                        param.event.event.cancelBubble = true;
-                        param.event.cancelBubble = true;
-                        if(!$("#result_left").is(":hidden")&&$("#result_left_head_name_p")[0].textContent==name){    
-                            result_left_show();
-                        }else{
-                            result_left_show();
-                        }
-                        $("#result_left_head_name_p")[0].textContent = name;
-                    });
-                    $("#result_left_head_name_p")[0].textContent = data['first'][0]['name'];
-                })  
-            
-            }
-        });
-        $('#result_head_search_icon').click(function(){
-            $("#main").removeClass("animated slideOutLeft");
-            $("#main").addClass("animated slideInLeft");
-            $("#main").show();
-            $("#result").removeClass("animated slideInRight");
-            $("#result").hide();
-            drawStartCanvas();
-        })
-    </script>
-
-    <!-- 关系图示例 -->
-    <script>
-        var Xindex=0;
-        var dom = document.getElementById("result_list_canvas");
+<!-- echarts初始化 -->
+<script>
+    function init_echarts() {
+        Xindex = 0;
+        dom = document.getElementById("result_list_canvas");
         dom.style.width = window.innerWidth - 20 + 'px';
         dom.style.height = window.innerHeight - 20 + 'px';
-        var myChart = echarts.init(document.getElementById("result_list_canvas"));
-    </script>
+        myChart = echarts.init(document.getElementById("result_list_canvas"));
+    };
+    init_echarts();
+</script>
 
-    <!-- x-y轴示例 -->
-    <!-- <script>
+<script type="text/javascript">
+    window.onload = function () {
+        var height = document.body.scrollHeight;
+        var logo_wrap = document.getElementById("logo_wrap");
+        var margin_top = (height - 250) / 2;       //因为此div在页面中只用了一次且以后不会改变，所以写了数值，如果是不确定的，获取到高度放着这里就可以
+        logo_wrap.style.marginTop = (margin_top) + "px";
+    }
+    window.onresize = function () {
+        var height = document.body.scrollHeight;
+        var logo_wrap = document.getElementById("logo_wrap");
+        var margin_top = (height - 250) / 2;
         var dom = document.getElementById("result_list_canvas");
-        dom.style.width = 780 + 'px';
-        dom.style.height = 600 + 'px';
-        var myChart = echarts.init(document.getElementById("result_list_canvas"));
+        dom.style.width = window.innerWidth - 20 + 'px';
+        dom.style.height = window.innerHeight - 5 + 'px';
+        myChart.resize();
+        logo_wrap.style.marginTop = (margin_top) + "px";
+        if (!$("#main").is(":hidden")) {
+            drawStartCanvas();
+        }
+    };
+    $("#result_list").mousedown(function (indexdown) {
+        downX = indexdown.pageX;
+        downY = indexdown.pageY;
+        $("#result_list").mouseup(function (indexup) {
+            if (downX - indexup.pageX == 0 && downY - indexup.pageY == 0) {
+                result_left_hide();
+            }
+            else {
 
-        // 指定图表的配置项和数据
+            }
+        });
+    });
+</script>
+
+<!-- 全部加载完毕后 -->
+<script>
+    $("#loading").hide();
+    $("#main").show();
+    $("#main").addClass("animated slideInDown");
+</script>
+
+<!-- 侧边栏动画函数实现 -->
+<script>
+    function result_left_hide() {
+        $("#result_left").animate({
+            left: '-' + $("#result_left").width() + 'px'
+        }, 1000, function () {
+            $("#result_left").hide();
+            $("#result_left").stop(true, true);
+        });
+    }
+
+    function result_left_show() {
+        $("#result_left").stop(true, true);
+        $("#result_left").show();
+        $("#result_left").animate({
+            left: 0 + 'px'
+        }, 1000, function () {
+            $("#result_left").show();
+        });
+    }
+
+    // 创建左侧信息栏
+    function change_info(data, name) {
+        if ("first" in globaldata) {
+            var arraytmp = globaldata['first'].concat(globaldata['second']).concat(globaldata['third']);
+        }
+        else if ("result" in globaldata) {
+            var arraytmp = [];
+            for (i in globaldata["result"]) {
+                arraytmp.push(globaldata["result"][i]["info"]);
+            }
+        }
+        var tmpobj = arraytmp[0];
+        var index_index;
+        if(globaldata["type"] == "user"){
+            for (ij = 0; ij < arraytmp.length; ij++) {
+                var tmpname = arraytmp[ij].name;
+                if (tmpname === name) {
+                    index_index = ij;
+                    break;
+                }
+            }
+        }else if(globaldata["type"] == "topic"){
+            for (ij = 0; ij < arraytmp.length; ij++) {
+                var tmpname = arraytmp[ij]["info"].name;
+                if (tmpname === name) {
+                    index_index = ij;
+                    break;
+                }
+            }
+        }else if(globaldata["type"] == "column"){
+            for (ij = 0; ij < arraytmp.length; ij++) {
+                var tmpname = arraytmp[ij]["info"].title;
+                if (tmpname === name) {
+                    index_index = ij;
+                    break;
+                }
+            }
+        }
+        tmpobj = arraytmp[index_index];
+        if (globaldata["type"] == "user"||globaldata["userType"] == "people") {
+            $("#result_left_head_a").attr('onclick', 'update(\"' + tmpobj.id + '\",\"'+tmpobj.urlToken+'\")');
+            $("#result_left_head_check").attr('onclick', 'relation(\"' + tmpobj.id + '\")');
+            $("#result_left_head_check")[0].innerHTML = "查看关系图"
+        }
+        else {
+            $("#result_left_head_check")[0].innerHTML = "";
+            $("#result_left_head_info").empty();
+            $("#result_left_head_info").append($("<p></p>").html(tmpobj["introduction"]));
+            if("title" in tmpobj["info"]){
+                $("#result_left_head_photo_p")[0].src = photo_url+"columns/"+checkurl(tmpobj["info"]["author"]["photo_url"]);
+            }else{
+                $("#result_left_head_photo_p")[0].src = photo_url+"topics/"+checkurl(tmpobj["info"]["avatarUrl"]);
+            }
+        }
+        if ("headline" in tmpobj) {
+            $("#result_left_head_line_p")[0].textContent = tmpobj.headline.replace(/<[^>]+>/g, ".");
+            $("#result_left_head_info").empty()
+
+            $("#result_left_head_info").append($("<br></br>"));
+            //居住地
+            //if("locations" in tmpobj) {
+            if (tmpobj['locations'].length > 0) {
+                var str = "现居" + tmpobj['locations'][0].name;
+                if (tmpobj.locations.length != 1) {
+                    str = str + ",曾在";
+                    for (i = 1; i < tmpobj.locations.length; i++) {
+                        str += tmpobj['locations'][i].name;
+                    }
+                    str = str + "住过";
+                }
+                $("#result_left_head_info").append($("<p><span  class='label label-primary'>居住地</span>"+str+"</p>").css("text-align", "center"));
+            }
+            //所在行业
+            if (tmpobj['business'].length > 0) {
+                var str = "所在行业\t" + tmpobj['business'][0].name;
+                $("#result_left_head_info").append($("<p><span  class='label label-primary'>教育经历</span>"+tmpobj['business'][0].name+"</p>").css("text-align", "center"));
+            }
+
+            //教育经历
+            if (tmpobj['educations'].length > 0) {
+                var str = "教育经历\t" + tmpobj['educations'][0].school.name;
+                if (tmpobj['educations'][0].major != undefined) {
+                    str += "·" + tmpobj['educations'][0].major
+                }
+                $("#result_left_head_info").append($("<p><span  class='label label-primary'>教育经历</span>"+tmpobj['educations'][0].school.name+"</p>").css("text-align", "center"));
+            }
+
+            //职业经历
+            if (tmpobj['employments'].length > 0) {
+                $("#result_left_head_info").append($("<p><span  class='label label-primary'>职业经历</span>"+tmpobj['employments'][0].company.name+"</p>").css("text-align", "center"));
+            }
+
+            if (tmpobj['description'] != "") {
+                var str = tmpobj['description'];
+                str = str.replace(/<[^>]+>/g, ".");
+
+                $("#result_left_head_info").append($("<p><span  class='label label-primary'>个人简介</span>"+tmpobj['description']+"</p>").css("text-align", "center"));
+            }
+            
+            $("#result_left_head_info").append("<hr>");
+            var tbody = $("<tbody></tbody>");
+            tbody.append("<tr><td>TA关注了</td><td>"+"<a href='javascript:void(0)' onclick='getlist(this,\"" + tmpobj["urlToken"] + "\",\"followingCount\")'>" + tmpobj["followingCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA被关注</td><td>"+"<a href='javascript:void(0)' onclick='getlist(this,\"" + tmpobj["urlToken"] + "\",\"followerCount\")'>" + tmpobj["followerCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA关注的话题</td><td>"+"<a href='javascript:void(0)' onclick='getlist(this,\"" + tmpobj["urlToken"] + "\",\"followingTopicCount\")'>" + tmpobj["followingTopicCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA关注的专栏</td><td>"+"<a href='javascript:void(0)' onclick='getlist(this,\"" + tmpobj["urlToken"] + "\",\"followingColumnsCount\")'>" + tmpobj["followingColumnsCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA关注的问题</td><td>"+tmpobj["followingQuestionCount"]+"</td></tr>");
+            tbody.append("<tr><td>TA关注的收藏夹</td><td>"+ tmpobj["followingFavlistsCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA赞助的Live</td><td>"+ tmpobj["participatedLiveCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA的回答</td><td>"+ tmpobj["answerCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA的提问</td><td>"+ tmpobj["questionCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA的文章</td><td>"+ tmpobj["articlesCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA的专栏</td><td>"+ tmpobj["columnsCount"] + "</a>"+"</td></tr>");
+            tbody.append("<tr><td>TA的点赞数</td><td>"+ tmpobj["voteupCount"] + "</a>"+"</td></tr>");
+            table = $("<table class='table table-striped'></table>").append(tbody);
+            $("#result_left_head_info").append(table);
+
+
+            $("#result_left_head_info").append($("<br></br>"));
+            $("#result_left_head_info").append($("<br></br>"));
+            $("#result_left_head_info").append($("<br></br>"));
+            //}
+        }
+        
+        if ("type" in globaldata && globaldata["type"] == "column"){
+            $("#result_left_head_info").append($("<p></p>").html("<span  class='label label-primary'>描述</span>"+tmpobj["info"]["description"]).css("text-align", "center"));
+            $("#result_left_head_info").append($("<p></p>").html("<span  class='label label-primary'>作者</span>"+tmpobj["info"]["author"]["name"]).css("text-align", "center"));
+        }
+        if ("type" in globaldata && globaldata["type"] == "topic"){
+            console.log(tmpobj);
+            $("#result_left_head_info").append($("<p></p>").html("<span  class='label label-primary'>描述</span>"+tmpobj["info"]["introduction"]).css("text-align", "center"));
+        }
+        $("#result_left_head_photo_p")[0].src = photo_url + "person/" +checkurl(tmpobj['photo_url']);
+    }
+
+    // ---------------------------------------------
+    // 返回关系图配置变量
+    function return_option() {
         var option = {
-            title: {
-                text: 'ECharts 入门示例'
+            tooltip: {
+                show: false,
+                formatter: function (params) {
+                    value = params;
+                    Xindex = value;
+                    return value.dataIndex;
+                }
             },
-            tooltip: {},
             legend: {
-                data:['销量']
+                x: "center",
+                data: ["朋友"]
             },
-            xAxis: {
-                data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
-            },
-            yAxis: {},
+            animation: false,
             series: [{
-                name: '销量',
-                type: 'bar',
-                data: [5, 20, 36, 10, 10, 20]
+                type: 'graph',
+                layout: 'force',
+                symbol: "circle",
+                symbolSize: 50,
+                roam: true,
+                edgeSymbol: ['circle', 'arrow'],
+                edgeSymbolSize: [0, 10],
+                focusNodeAdjacency: true, //划过只显示对应关系
+                edgeLabel: {
+                    normal: {
+                        show: true,
+                        textStyle: {
+                            fontSize: 20
+                        },
+                        formatter: "{c}"
+                    }
+                },
+                lineStyle: {
+                    normal: {
+                        opacity: 1,
+                        width: 2,
+                        curveness: 0
+                    }
+                },
+                label: {
+                    normal: {
+                        show: true
+                    }
+                },
+                force: {
+                    repulsion: 1500
+                },
+                data: [],
+                links: []
             }]
         };
+        return option
+    }
 
-        // 使用刚指定的配置项和数据显示图表。
-        myChart.setOption(option);
-        myChart.on('click',function(param){
-            var event = param.event;
-            console.log(event);
-            var name=param.name;
-            $("#result_left").show();
-                $("#result_left").animate({
-                    left:'+'+0+'px'
-                },1000,function(){
-            });
-            event.event.cancelBubble = true;
-        });
-    </script> -->
-    
-    <script type="text/javascript">
-        window.onload = function () {
-            var height = document.body.scrollHeight;
-            var logo_wrap = document.getElementById("logo_wrap");
-            var margin_top = (height - 250) / 2;       //因为此div在页面中只用了一次且以后不会改变，所以写了数值，如果是不确定的，获取到高度放着这里就可以
-            logo_wrap.style.marginTop = (margin_top) + "px";
-        }
-        window.onresize = function () {
-            var height = document.body.scrollHeight;
-            var logo_wrap = document.getElementById("logo_wrap");
-            var margin_top = (height - 250) / 2;
-            var dom = document.getElementById("result_list_canvas");
-            dom.style.width = window.innerWidth - 20 + 'px';
-            dom.style.height = window.innerHeight - 5 + 'px';
-            myChart.resize(); 
-            logo_wrap.style.marginTop = (margin_top) + "px";
-            if(!$("#main").is(":hidden")){
-                drawStartCanvas();
-            }
+    // 创建关系图
+    function create_relation_schema(data) {
+        console.log(data);
+        $("#result_list").css("overflow-y", "hidden");
+        var option = return_option();
+        var tmp = {
+            'name': globaldata['first'][0]['name'],
+            draggable: true,
+            'urlToken': data['first'][0]['urlToken'],
+            x: myChart.getWidth() / 2,
+            y: myChart.getHeight() / 2,
+            symbolSize: 80,
+            fixed: true,
         };
-        $("#result_list").mousedown(function(indexdown){
-            downX = indexdown.pageX;
-            downY = indexdown.pageY;
-            $("#result_list").mouseup(function(indexup){
-                if(downX-indexup.pageX == 0 && downY - indexup.pageY == 0){
-                    result_left_hide();
+        option.series[0].data.push(tmp);
+        for (var i in globaldata['second']) {
+            var tmp = {
+                'name': globaldata['second'][i]['name'],
+                draggable: true,
+                'urlToken': globaldata['second'][i]['urlToken']
+                ,
+                symbolSize: 80
+            };
+            option.series[0].data.push(tmp);
+            var linktmp =
+                {
+                    'source': globaldata['second'][i]['name']
+                    , 'target': globaldata['first'][0]['name']
+                    , 'lineStyle': {normal: {color: '#38f', curveness: 0}}
+                    , 'value': ''
+                };
+            option.series[0].links.push(linktmp);
+        }
+        var iiii = 1;
+        for (var i in globaldata['third']) {
+            iiii++;
+            if (iiii == 10) break;
+            var tmp = {
+                'name': globaldata['third'][i]['name'],
+                draggable: true,
+                'urlToken': globaldata['third'][i]['urlToken'],
+                symbolSize: 80
+            };
+            option.series[0].data.push(tmp);
+            for (var j in globaldata['second']) {
+                if (globaldata['second'][j]['urlToken'] == globaldata['third'][i]['belong']) {
+                    option.series[0].links.push(
+                        {
+                            'source': globaldata['third'][i]['name']
+                            , 'target': globaldata['second'][j]['name']
+                            , 'lineStyle': {normal: {color: '#38f', curveness: 0}}
+                            , 'value': ''
+                        });
+                }
+            }
+        }
+        myChart.off();
+        myChart.setOption(option);
+        myChart.on('mousedown', function (param) {
+            relation_schema_mousedown(param, globaldata);
+        });
+        $("#result_left_head_name_p")[0].textContent = globaldata['first'][0]['name'];
+    }
+
+    // bind关系图点击行为
+    function relation_schema_mousedown(param, data) {
+        var name = param.data.name;
+        var urlToken = param.data.urlToken;
+        param.event.event.cancelBubble = true;
+        param.event.cancelBubble = true;
+        if (!$("#result_left").is(":hidden") && $("#result_left_head_name_p")[0].textContent == name) {
+            result_left_show();
+        } else {
+            result_left_show();
+        }
+        $("#result_left_head_name_p")[0].textContent = name;
+        change_info(data, name);
+    }
+
+    // ---------------------------------------------
+
+    // ---------------------------------------------
+    // 返回排行榜配置变量
+    function return_rank_option(data) {
+        var value = [];
+        var name = [];
+        var index = data["count"];
+        var title = "";
+        alldata = data;
+        title = data["meaning"] + '排行榜前' + data["result"].length;
+        if (data["type"] == "topic") {
+            result_left_hide();
+            for (tmp in data["result"]) {
+                value.push(data["result"][tmp]["info"][index]);
+                name.push(data["result"][tmp]["info"]["info"]["name"]);
+            }
+            if (data["another"]["type"] == "score") {
+                title = data["meaning"] + '在' + data["another"]["range"][0] + "-" + data["another"]["range"][1] + "之间";
+                if(data["another"]["range"].length==1){
+                    title = data["meaning"] + '在' + data["another"]["range"][0] + "以" + data["another"]["status"];
+                }
+                $("#result_list_time")[0].innerHTML += "<button class='btn btn-info' href='javascript:void(0)' onclick='change_one(alldata)'>换一批</button>"
+            }
+            $("#result_left_head_line_p")[0].innerHTML = "";
+        }
+        else if (data["type"] == "column") {
+            result_left_hide();
+            for (tmp in data["result"]) {
+                value.push(data["result"][tmp]["info"]["info"][index]);
+                name.push(data["result"][tmp]["info"]["info"]["title"]);
+            }
+            if (data["another"]["type"] == "score") {
+                title = data["meaning"] + '在' + data["another"]["range"][0] + "-" + data["another"]["range"][1] + "之间";
+                if(data["another"]["range"].length==1){
+                    title = data["meaning"] + '在' + data["another"]["range"][0] + "以" + data["another"]["status"];
+                }
+                $("#result_list_time")[0].innerHTML += "<button class='btn btn-info' href='javascript:void(0)' onclick='change_one(alldata)'>换一批</button>"
+            }
+            $("#result_left_head_line_p")[0].innerHTML = "";
+        }
+        else if (data["type"] == "user") {
+            for (tmp in data["result"]) {
+                value.push(data["result"][tmp]["info"][index]);
+                name.push(data["result"][tmp]["info"]["name"]);
+            }
+            if (data["another"]["type"] == "score") {
+                title = data["meaning"] + '在' + data["another"]["range"][0] + "-" + data["another"]["range"][1] + "之间";
+                if(data["another"]["range"].length==1){
+                    title = data["meaning"] + '在' + data["another"]["range"][0] + "以" + data["another"]["status"];
+                }
+                $("#result_list_time")[0].innerHTML += "<button class='btn btn-info' href='javascript:void(0)' onclick='change_one(alldata)'>换一批</button>"
+            }
+        }
+
+
+        var max = Math.max(...value
+    )
+        ;
+        var option = {
+            title: {
+                text: title,
+                x: 'center',
+                textStyle: {
+                    color: '#fff'
+                }
+            },
+            tooltip: {
+                trigger: 'item'
+            },
+            dataRange: {
+                show: false,
+                min: 0,
+                max: data["result"].length,
+                calculable: true,
+                color: ['#50a3ba', '#eac736', '#d94e5d'],
+                y: 'center',
+            },
+
+            xAxis: [
+                {
+                    type: 'category',
+                    show: false,
+                    data: name,
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    show: false
+                }
+            ],
+            series: [
+                {
+                    name: data["meaning"]+'（第三位数字）排行榜',
+                    type: 'bar',
+                    barGap: 0.1,
+                    barCategoryGap: 0.01,
+                    itemStyle: {
+                        normal: {
+                            color: function (params) {
+                                // build a color map as your need.
+                                var colorList = [
+                                    '#C1232B', '#B5C334', '#FCCE10', '#E87C25', '#27727B',
+                                    '#FE8463', '#9BCA63', '#FAD860', '#F3A43B', '#60C0DD',
+                                    '#D7504B', '#C6E579', '#F4E001', '#F0805A', '#26C0C0',
+                                ];
+                                return colorList[params.dataIndex]
+                            },
+                            label: {
+                                show: true,
+                                position: 'top',
+                                fontSize: 20,
+                                formatter:  '{b}',
+                            },
+                            shadowBlur: 80,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    data: value.map(function (a, idx) {
+                        return [idx, ((a / max) * 30 + 30).toFixed(0), a, idx];
+                    })
+                }
+            ]
+        };
+        return option;
+    }
+
+    // 创建排行榜并赋值on行为
+    function create_rank_schema(data) {
+        $("#result_list").css("overflow-y", "hidden");
+        var option = return_rank_option(data);
+        optiontemp = option;
+        myChart.off();
+        myChart.setOption(option);
+        myChart.on('mousedown', function (param) {
+            rank_schema_mousedown(param, data);
+        });
+        $("#result_left_head_name_p")[0].textContent = data['result'][0]['info']['name'];
+        change_info(data, data['result'][0]['info']['name']);
+    }
+
+    // 排行榜行为bind
+    function rank_schema_mousedown(param, data) {
+        var name = param.name;
+        var urlToken = param.data.urlToken;
+        param.event.event.cancelBubble = true;
+        param.event.cancelBubble = true;
+        if (!$("#result_left").is(":hidden") && $("#result_left_head_name_p")[0].textContent == name) {
+            result_left_show();
+        } else {
+            result_left_show();
+        }
+        $("#result_left_head_name_p")[0].textContent = name;
+        change_info(data, name);
+    }
+
+    // ---------------------------------------------
+
+    function create_list(data) {
+        result_left_hide();
+        $("#result_list_canvas").empty();
+        $("#result_list_canvas").css("padding-top", "60px");
+        for (i in data["all"]) {
+            var top = "";
+            var name = "";
+            var photourl1 = "";
+            var relation = undefined;
+            if (data["all"][i]["type"] == "person") {
+                top = "用户";
+                photourl1 = "person/"+checkurl(data["all"][i]["info"]["photo_url"]);
+                if("name" in data["all"][i]["highlight"]){
+                    name = data["all"][i]["highlight"]["name"];
+                }else{
+                    name = data["all"][i]["info"]["name"];
+                }
+                relation = data["all"][i]["info"]["id"];
+            } else if(data["all"][i]["type"] == "topic"){
+                top = "话题";
+                photourl1 = "topic/"+checkurl(data["all"][i]["info"]["info"]["avatarUrl"]);
+                if("info.name" in data["all"][i]["highlight"]){
+                    name = data["all"][i]["highlight"]["info.name"];
+                }else{
+                    name = data["all"][i]["info"]["info"]["name"];
+                }
+            } else if(data["all"][i]["type"] == "column"){
+                top = "专栏";
+                photourl1 = "columns/"+checkurl(data["all"][i]["info"]["info"]["author"]["photo_url"]);
+                if("info.title" in data["all"][i]["highlight"]){
+                    name = data["all"][i]["highlight"]["info.title"];
+                }else{  
+                    name = data["all"][i]["info"]["info"]["title"];
+                }
+            }
+            
+            $("#result_list").css("overflow-y", "scroll");
+            var div = "<div class='col-sm-6 col-xs-12' style='height:250px;font-size:20px;padding:10px;'>" +
+                "<div style='overflow:hidden;height:240px;background-color:white'><div>" + top + "</div>" +
+                "<div style='height:80px;width:80px;display:inline-block;float:left;margin-left:10px'>" +
+                "<img href='javascript:void(0)' onclick='relation(\""+relation+"\")' style='height:70px;width:70px;border:solid' class='img-circle' src=" + photo_url+photourl1 + ">" +
+                "</div>" +
+                "<div style='display:inline-block;text-align:center;'>" +
+                "<br>" +
+                "<a><p id='" + data["all"][i]["type"] + "_" + data["all"][i]["info"]["urlToken"] + "' style='text-overflow:ellipsis' data-toggle='modal' data-target='#myModal'>" + name + "</p></a>" +
+                "</div>";
+            if (data["all"][i]["type"] == "person") {
+                if("headline" in data["all"][i]["highlight"]){
+                    div += "<div>"+"签名："+data["all"][i]["highlight"]["headline"]+"</div>";
+                }else if("description" in data["all"][i]["highlight"]){
+                    div += "<div>"+"简述："+data["all"][i]["highlight"]["description"]+"</div>";
                 }
                 else{
+                    div += "<div>"+"签名："+data["all"][i]["info"]["headline"]+"</div>";
+                }
+            } else if(data["all"][i]["type"] == "topic"){
+                if("info.introduction" in data["all"][i]["highlight"]){
+                    div += "<div>"+"简述："+data["all"][i]["highlight"]["info.introduction"]+"</div>";
+                }else{
+                    div += "<div>"+"简述："+data["all"][i]["info"]["info"]["introduction"]+"</div>";
+                }
+            } else if(data["all"][i]["type"] == "column"){
+                if("info.description" in data["all"][i]["highlight"]){
+                    div += "<div>"+"简述："+data["all"][i]["highlight"]["info.description"]+"</div>";
+                }else{
+                    div += "<div>"+"简述："+data["all"][i]["info"]["info"]["description"]+"</div>";
+                }
+            }
+            div = div +
+                "</div>" +
+                "</div>";
+            if (data["all"][i]["type"] == "person") {
+                $("#result_list_canvas").append(div);
+            } else if (data["all"][i]["type"] == "topic") {
+                $("#result_list_canvas").append(div);
+            } else if (data["all"][i]["type"] == "column") {
+                $("#result_list_canvas").append(div);
+            }
+        }
+        $("#result_list_canvas").append("<div class='col-xs-12' style='height:80px'></div>");
+    }
+
+    // ---------------------------------------------
+    // 创建loading界面
+    function create_loading() {
+        $("#result_list").css("overflow-y", "hidden");
+        var circle = new Sonic({
+
+            width: 50,
+            height: 50,
+            padding: 50,
+
+            strokeColor: '#000',
+
+            pointDistance: .01,
+            stepsPerFrame: 3,
+            trailLength: .7,
+
+            step: 'fader',
+
+            setup: function () {
+                this._.lineWidth = 5;
+            },
+
+            path: [
+                ['arc', 25, 25, 25, 0, 360]
+            ]
+
+        });
+
+        circle.play();
+
+        document.getElementById("result_list_canvas").appendChild(circle.canvas);
+    }
+
+    // ---------------------------------------------
+
+    function ajax_return(data) {
+        data = $.parseJSON(data);
+        globaldata = data;
+        $("#result_list_canvas").remove();
+        $("#result_list").append("<div id='result_list_canvas'></div>")
+        var time = "查询总用时" + data['total_time'].toFixed(2) + "秒";
+        if("another" in globaldata&&"total" in globaldata["another"]){
+            time+= "\t查询总数"+globaldata["another"]["total"];
+        }
+        $("#result_list_time").text(time);
+        if ("None" in globaldata && globaldata["None"] == "true"){
+            $("#result_list_canvas").append("<p style='font-size:40px'>暂无搜索结果</p>");
+            return;
+        }
+        if ("all" in globaldata && globaldata.all.length==0){
+            $("#result_list_canvas").append("<p style='font-size:40px'>暂无搜索结果</p>");
+            return;
+        }
+        init_echarts();
+        var name;
+        if ("first" in globaldata) {//如果是关系图
+            create_relation_schema(globaldata);
+            name = globaldata['first'][0]['name'];
+        }
+        if ("result" in globaldata) {
+            create_rank_schema(globaldata);
+        }
+        if ("all" in globaldata) {
+            create_list(globaldata);
+        }
+        change_info(globaldata, name);
+        if(data["type"]=="column"||data["type"]=="topic"){
+
+        }else{
+            result_left_show();
+        }
+    }
+
+    function update(id,token) {
+        var allname = "";
+        $.ajax({
+            type: "GET",
+            url: host_all+"/update",
+            data: {id: id,token:token},
+            success: function (data) {
+                data = $.parseJSON(data);
+                data['id'];
+                if ("first" in globaldata) {
+                    for (x in globaldata["first"]) {
+                        if (globaldata["first"][x]['id'] == data['id']) {
+                            globaldata["first"][x] = data;
+                        }
+                    }
+                    for (x in globaldata["second"]) {
+                        if (globaldata["second"][x]['id'] == data['id']) {
+                            globaldata["second"][x] = data;
+                        }
+                    }
+                    for (x in globaldata["third"]) {
+                        if (globaldata["third"][x]['id'] == data['id']) {
+                            globaldata["third"][x] = data;
+                        }
+                    }
+                }
+                else if ("result" in globaldata) {
+                    for (x in globaldata["result"]) {
+                        if (globaldata["result"][x]['info']['id'] == data['id']) {
+                            globaldata["result"][x]['info'] = data;
+                        }
+                    }
 
                 }
-            });
+                change_info(globaldata, data['name']);
+            }
         });
-    </script>
+    }
 
-    <!-- 全部加载完毕后 -->
-    <script>
-        $("#loading").hide();
-        $("#main").show();
-        $("#main").addClass("animated slideInDown");
-    </script>
-
-    <!-- 侧边栏动画函数实现 -->
-    <script>
-        function result_left_hide(){
-            $("#result_left").animate({
-                left:'-'+$("#result_left").width()+'px'
-            },1000,function(){
-                $("#result_left").hide();
-            $("#result_left").stop(true, true);
-            });
+    function relation(id) {
+        if(id==undefined){
+            return;
         }
+        $.ajax({
+            type: "GET",
+            url: host_all+"/relation",
+            data: {id: id},
+            success: function (data) {
+                ajax_return(data);
+            }
+        });
+    }
 
-        function result_left_show(){
-            $("#result_left").show();
-            $("#result_left").stop(true, true);
-            $("#result_left").animate({
-                    left:0+'px'
-                },1000,function(){
-                $("#result_left").show();
-            });
-        }
-    </script>
+    $(function () {
+        $('#myModal').on('show.bs.modal',
+            function (data) {
+                if ("relatedTarget" in data) {
+
+                } else {
+                    return;
+                }
+                temptemptemp = data.relatedTarget.innerHTML;
+                var temp = data.relatedTarget.id.split("_");
+                var key = "";
+                if(temp[0]=="person"){
+                    key = "followerCount";
+                    $.ajax({
+                    type: "GET",
+                    url: host_all+"/getlist",
+                    data: {id: temp[1], type: temp[0],data:key},
+                    success: function (data) {
+                        $("#myModelMain").empty();
+                        data = $.parseJSON(data);
+                        if("NONE" in data||data['result'][0]["followers"].length == 0){
+                            $("#myModelMain").append("<div>暂无搜索结果</div>");
+                        }
+                        for (tmp in data['result'][0]["followers"]) {
+                            var name = data['result'][0]["followers"][tmp]["name"];
+                            var photo_url1 = photo_url+"person/"+data['result'][0]["followers"][tmp]["photo_url"];
+                            //data['result'][tmp]['info']['photo_url']
+                            var div = "<div style='height:100px;width:50%;display:inline-block'>"
+                                + "<img src='" + photo_url1 + "' style='height:80px;width:80px;display:inline-block'>"
+                                + "<h3 style='display:inline-block'>" + name + "</h3>";
+                            +"</div>"
+                            $("#myModelMain").append(div);
+                        }
+                        }
+                    });
+                }else if(temp[0]=="topic"){
+                    $("#myModelMain").empty();
+                    for(tmp in globaldata["all"]){
+                        if(globaldata["all"][tmp]["info"]["urlToken"]==temp[1]){
+                            var div = "<div>"+globaldata["all"][tmp]["info"]["info"]["introduction"]+"</div>";
+                            $("#myModelMain").append(div);
+                        }
+                    }
+                }else if(temp[0]=="column"){
+                    $("#myModelMain").empty();
+                    for(tmp in globaldata["all"]){
+                        if(globaldata["all"][tmp]["info"]["urlToken"]==temp[1]){
+                            var div = "<div>"+globaldata["all"][tmp]["info"]["info"]["description"]+"</div>";
+                            $("#myModelMain").append(div);
+                        }
+                    }
+                }
+                
+            })
+    });
+
+    function getlist(event, id, data) {
+        $('#myModal').modal('toggle');
+        $.ajax({
+            type: "GET",
+            url: host_all+"/getlist",
+            data: {id: id, type: "person", data: data},
+            success: function (data) {
+                $("#myModelMain").empty();
+                data = $.parseJSON(data);
+                console.log(data);
+                if("NONE" in data||data['result'][0]["followers"].length == 0){
+                    console.log(1);
+                    $("#myModelMain").append("<div>暂无搜索结果</div>");
+                    return;
+                }
+                for (tmp in data['result'][0]["followers"]) {
+                    var name = data['result'][0]["followers"][tmp]["name"];
+                    var photo_url1 = photo_url+"person/"+data['result'][0]["followers"][tmp]["photo_url"];
+                    //data['result'][tmp]['info']['photo_url']
+                    var div = "<div style='height:100px;width:50%;display:inline-block'>"
+                        + "<img src='" + photo_url1 + "' style='height:80px;width:80px;display:inline-block'>"
+                        + "<h3 style='display:inline-block'>" + name + "</h3>";
+                    +"</div>"
+                    $("#myModelMain").append(div);
+                }
+            }
+        });
+    }
+
+    function change_one(data) {
+        data = data["another"];
+        $.ajax({
+            type: "POST",
+            url: host_all+"/change",
+            dataType: "json",
+            data: data,
+            success: function (data) {
+                $("#result_list_time").text("查询总用时" + data['total_time'].toFixed(2) + "秒");
+                globaldata = data;
+                create_rank_schema(data);
+            }
+        });
+    }
+
+    function checkurl(url){
+        arrayurl = url.split("/");
+        return arrayurl[arrayurl.length-1];
+    }
+</script>
 
 </body>
 

@@ -4,11 +4,11 @@
 
 # mongo
 host = ['10.66.3.43', 'localhost']
-index = 1
+index = 0
 mongo_host = host[index]
 mongo_port = 27017
 # redis
-redis_host = host[index]
+redis_host = '10.66.3.43'
 redis_port = '6379'
 
 zset_success_url = 'zset_success_url'   # url成功有序集合

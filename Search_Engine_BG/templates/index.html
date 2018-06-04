@@ -1,11 +1,411 @@
 {% load staticfiles %}
-<!DOCTYPE html>
-<html lang="en">
+{#{% static '/js/jquery-3.3.1.min.js' %}#}
+<!doctype html>
+<html>
+
 <head>
+    <title>Searcher Zhihuer</title>
     <meta charset="UTF-8">
-    <title>Title</title>
-    <script type="text/javascript" src="{% static '/js/jquery-3.3.1.min.js' %} "></script>
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <link rel="stylesheet" type="text/css" href="{% static '/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static '/css/index1.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static '/css/animate.min.css' %}">
+    <script type="text/javascript" src="{% static '/js/jquery-3.3.1.min.js' %}"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"></script>
+    <script>
+        var welcomeText = "您想搜索什么呢?";
+        temptemptemp = "";
+    </script>
 </head>
+
 <body>
+    <!-- 加载界面 -->
+    <div id="loading" class="wrap" align="center" style="widows:100%;height:100%;">
+        <img id="logo_wrap" src="{% static '/img/liukanshan-huaxin.gif' %}" />
+        <br/>
+        <br/>
+        <label style="font-size:150%">资源加载中，马上就好</label>
+    </div>
+
+    <!-- 主搜索界面 -->
+    <div id="main" class="">
+        <canvas id="main_canvas"></canvas>
+        <div id="index_item">
+            <br/><br/><br/><br/><br/><br/><br/>
+            <img id="index_img" src="{% static '/img/index_niupigu.gif' %}">
+            <br/><br/><br/>
+            <label id="index_label" style="color:white;font-size:48px;">晚上好，您想搜索什么呢?</label>
+            <br/>
+            <input id="search_input" style="border: bottom width 2px;" />
+            <br/><br/><br/>
+        </div>
+    </div>
+
+    <script>
+        $("#main").hide();
+        now = new Date(),hour = now.getHours()
+        if(hour < 11){$("#index_label").text("上午好，"+welcomeText);}
+        else if(hour < 13){$("#index_label").text("中午好，"+welcomeText);}
+        else if (hour < 17){$("#index_label").text("下午好，"+welcomeText);}
+        else{$("#index_label").text("晚上好，"+welcomeText);}
+    </script>
+
+    <!-- 星空图实现代码 -->
+    <script>
+        function drawStartCanvas(){
+            // $("#main_canvas").remove();
+            // new_canvas = $("<canvas id='main_canvas'></canvas>");
+            // $("#index_item").before(new_canvas);
+            "use strict";
+            var canvas = document.getElementById('main_canvas'),
+            ctx = canvas.getContext('2d'),
+            w = canvas.width = window.innerWidth,
+            h = canvas.height = window.innerHeight,
+            hue = 217,
+            stars = [],
+            count = 0,
+            maxStars = 1200;
+            var canvas2 = document.createElement('canvas'),
+            ctx2 = canvas2.getContext('2d');
+            canvas2.width = 100;
+            canvas2.height = 100;
+            var half = canvas2.width / 2,
+            gradient2 = ctx2.createRadialGradient(half, half, 0, half, half, half);
+            gradient2.addColorStop(0.025, '#fff');
+            gradient2.addColorStop(0.1, 'hsl(' + hue + ', 61%, 33%)');
+            gradient2.addColorStop(0.25, 'hsl(' + hue + ', 64%, 6%)');
+            gradient2.addColorStop(1, 'transparent');
+            ctx2.fillStyle = gradient2;
+            ctx2.beginPath();
+            ctx2.arc(half, half, half, 0, Math.PI * 2);
+            ctx2.fill();
+            // End cache
+            function random(min, max) {
+            if (arguments.length < 2) {
+                max = min;
+                min = 0;
+            }
+            if (min > max) {
+                var hold = max;
+                max = min;
+                min = hold;
+            }
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            function maxOrbit(x, y) {
+            var max = Math.max(x, y),
+                diameter = Math.round(Math.sqrt(max * max + max * max));
+                return diameter / 2;
+            }
+            var Star = function() {
+                this.orbitRadius = random(maxOrbit(w, h));
+                this.radius = random(60, this.orbitRadius) / 12;
+                this.orbitX = w / 2;
+                this.orbitY = h / 2;
+                this.timePassed = random(0, maxStars);
+                this.speed = random(this.orbitRadius) / 900000;
+                this.alpha = random(2, 10) / 10;
+                count++;
+                stars[count] = this;
+            }
+            Star.prototype.draw = function() {
+                var x = Math.sin(this.timePassed) * this.orbitRadius + this.orbitX,
+                    y = Math.cos(this.timePassed) * this.orbitRadius + this.orbitY,
+                    twinkle = random(10);
+                if (twinkle === 1 && this.alpha > 0) {
+                    this.alpha -= 0.05;
+                } else if (twinkle === 2 && this.alpha < 1) {
+                    this.alpha += 0.05;
+                }
+                ctx.globalAlpha = this.alpha;
+                ctx.drawImage(canvas2, x - this.radius / 2, y - this.radius / 2, this.radius, this.radius);
+                this.timePassed += this.speed;
+            }
+            for (var i = 0; i < maxStars; i++) {
+                new Star();
+            }
+            function animation() {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.globalAlpha = 0.8;
+                ctx.fillStyle = 'hsla(' + hue + ', 64%, 6%, 1)';
+                ctx.fillRect(0, 0,w, h);
+                ctx.globalCompositeOperation = 'lighter';
+                for (var i = 1, l = stars.length; i < l; i++) {
+                    stars[i].draw();
+                }
+                window.requestAnimationFrame(animation);
+            }
+            animation()
+        }
+
+        drawStartCanvas();
+
+    </script>
+
+    <!-- 搜索结果界面 -->
+    <div id="result">
+        <!-- 标题栏 -->
+        <div id="result_head">
+            <div id="result_head_search">
+                <img id="result_head_search_icon" src="{% static '/img/index_niupigu.gif' %}"></img>
+                <input id="result_head_search_input"></input>
+            </div>
+        </div>
+        <!-- 搜素结果列表 -->
+        <div id="result_list">
+            <div id="result_list_canvas">
+            </div>
+        </div>
+        <div id="result_left" style="border: solid;overflow-y: scroll;overflow-x: hidden;">
+            <div id="result_left_head" style="font-size: 20px">
+                <div id="result_left_head_photo" style="margin:20px auto 20px auto;"><p id="result_left_head_photo_p" style="text-align: center">图片</p></div>
+                <div id="result_left_head_name" style="margin:20px auto 20px auto;"><p id="result_left_head_name_p" style="text-align: center">name</p></div>
+                <div id="result_left_head_info" style="margin:20px auto 20px auto;border: solid;height: 800px;"><p id="result_left_head_info_p" style="text-align: center">其他信息</p></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $("#result").hide();
+    </script>
+
+    <script>
+        $('#search_input').bind('keyup', function(event) {
+            if (event.keyCode == "13") {
+                //样式变化
+                $("#main").removeClass("animated slideInDown");
+                $("#main").hide();
+                $("#result").show();
+                $("#result").removeClass("animated slideOutRight")
+                $("#result").addClass("animated slideInRight");
+                $("#result_head_search_input")[0].value = $("#search_input")[0].value
+
+                // $.ajax({
+                //     type: "GET",
+                //     url: "http://127.0.0.1:8000/search",
+                //     headers: {
+                //         'Access-Control-Allow-Origin': '*'
+                //     },
+                //     data: {test:$("#search_input").val()},
+                //     success: function(data){
+                //         console.log(data);
+                //     }
+                // });
+                $.getJSON("{% static '/json/res.json' %}",function(data){
+                    option = {
+                        tooltip: {
+                            show: false,
+                            formatter:function(params){
+                                value = params;
+                                Xindex = value;
+                                return value.dataIndex;
+                            }
+                        },
+                        legend: {
+                            x: "center",
+                            data: ["朋友"]
+                        },
+                        animation: false,
+                        series: [{
+                            type: 'graph',
+                            layout: 'force',
+                            symbol: "circle",
+                            symbolSize: 50,
+                            roam: true,
+                            edgeSymbol: ['circle', 'arrow'],
+                            edgeSymbolSize: [0, 10],
+                            focusNodeAdjacency: true, //划过只显示对应关系
+                            edgeLabel: {
+                                normal: {
+                                    show: true,
+                                    textStyle: {
+                                        fontSize: 20
+                                    },
+                                    formatter: "{c}"
+                                }
+                            },
+                            lineStyle: {
+                                normal: {
+                                    opacity: 1,
+                                    width: 2,
+                                    curveness: 0
+                                }
+                            },
+                            label: {
+                                normal: {
+                                    show: true
+                                }
+                            },
+                            force: {
+                                repulsion: 200
+                            },
+                            data: [],
+                            links: []
+                        }]
+                    };
+                    var tmp = {'name':data['first'][0]['name'],draggable:true,'urlToken':data['first'][0]['urlToken']};
+                    option.series[0].data.push(tmp);
+                    for(var i in data['second']){
+                        var tmp = {'name':data['second'][i]['name'],draggable:true,'urlToken':data['second'][i]['urlToken']};
+                        option.series[0].data.push(tmp);
+                        var linktmp =
+                        {'source':data['second'][i]['name']
+                        ,'target':data['first'][0]['name']
+                        ,'lineStyle': {normal: {color: '#38f',curveness: 0}}
+                        ,'value':''};
+                        option.series[0].links.push(linktmp);
+                    }
+                    for(var i in data['third']){
+                        var tmp = {'name':data['third'][i]['name'],draggable:true,'urlToken':data['third'][i]['urlToken']};
+                        option.series[0].data.push(tmp);
+                        for(var j in data['second']){
+                            if(data['second'][j]['urlToken']==data['third'][i]['belong']){
+                                option.series[0].links.push(
+                                    {'source':data['third'][i]['name']
+                                    ,'target':data['second'][j]['name']
+                                    ,'lineStyle': {normal: {color: '#38f',curveness: 0}}
+                                    ,'value':''});
+                            }
+                        }
+                    }
+                    myChart.setOption(option);
+                    myChart.on('mousedown',function(param){
+                        var name=param.data.name;
+                        var urlToken = param.data.urlToken;
+                        param.event.event.cancelBubble = true;
+                        param.event.cancelBubble = true;
+                        if(!$("#result_left").is(":hidden")&&$("#result_left_head_name_p")[0].textContent==name){
+                            result_left_show();
+                        }else{
+                            result_left_show();
+                        }
+                        $("#result_left_head_name_p")[0].textContent = name;
+                    });
+                    $("#result_left_head_name_p")[0].textContent = data['first'][0]['name'];
+                })
+
+            }
+        });
+        $('#result_head_search_icon').click(function(){
+            $("#main").removeClass("animated slideOutLeft");
+            $("#main").addClass("animated slideInLeft");
+            $("#main").show();
+            $("#result").removeClass("animated slideInRight");
+            $("#result").hide();
+            drawStartCanvas();
+        })
+    </script>
+
+    <!-- 关系图示例 -->
+    <script>
+        var Xindex=0;
+        var dom = document.getElementById("result_list_canvas");
+        dom.style.width = window.innerWidth - 20 + 'px';
+        dom.style.height = window.innerHeight - 20 + 'px';
+        var myChart = echarts.init(document.getElementById("result_list_canvas"));
+    </script>
+
+    <!-- x-y轴示例 -->
+    <!-- <script>
+        var dom = document.getElementById("result_list_canvas");
+        dom.style.width = 780 + 'px';
+        dom.style.height = 600 + 'px';
+        var myChart = echarts.init(document.getElementById("result_list_canvas"));
+        // 指定图表的配置项和数据
+        var option = {
+            title: {
+                text: 'ECharts 入门示例'
+            },
+            tooltip: {},
+            legend: {
+                data:['销量']
+            },
+            xAxis: {
+                data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
+            },
+            yAxis: {},
+            series: [{
+                name: '销量',
+                type: 'bar',
+                data: [5, 20, 36, 10, 10, 20]
+            }]
+        };
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+        myChart.on('click',function(param){
+            var event = param.event;
+            console.log(event);
+            var name=param.name;
+            $("#result_left").show();
+                $("#result_left").animate({
+                    left:'+'+0+'px'
+                },1000,function(){
+            });
+            event.event.cancelBubble = true;
+        });
+    </script> -->
+
+    <script type="text/javascript">
+        window.onload = function () {
+            var height = document.body.scrollHeight;
+            var logo_wrap = document.getElementById("logo_wrap");
+            var margin_top = (height - 250) / 2;       //因为此div在页面中只用了一次且以后不会改变，所以写了数值，如果是不确定的，获取到高度放着这里就可以
+            logo_wrap.style.marginTop = (margin_top) + "px";
+        }
+        window.onresize = function () {
+            var height = document.body.scrollHeight;
+            var logo_wrap = document.getElementById("logo_wrap");
+            var margin_top = (height - 250) / 2;
+            var dom = document.getElementById("result_list_canvas");
+            dom.style.width = window.innerWidth - 20 + 'px';
+            dom.style.height = window.innerHeight - 5 + 'px';
+            myChart.resize();
+            logo_wrap.style.marginTop = (margin_top) + "px";
+            if(!$("#main").is(":hidden")){
+                drawStartCanvas();
+            }
+        };
+        $("#result_list").mousedown(function(indexdown){
+            downX = indexdown.pageX;
+            downY = indexdown.pageY;
+            $("#result_list").mouseup(function(indexup){
+                if(downX-indexup.pageX == 0 && downY - indexup.pageY == 0){
+                    result_left_hide();
+                }
+                else{
+                }
+            });
+        });
+    </script>
+
+    <!-- 全部加载完毕后 -->
+    <script>
+        $("#loading").hide();
+        $("#main").show();
+        $("#main").addClass("animated slideInDown");
+    </script>
+
+    <!-- 侧边栏动画函数实现 -->
+    <script>
+        function result_left_hide(){
+            $("#result_left").animate({
+                left:'-'+$("#result_left").width()+'px'
+            },1000,function(){
+                $("#result_left").hide();
+            $("#result_left").stop(true, true);
+            });
+        }
+        function result_left_show(){
+            $("#result_left").show();
+            $("#result_left").stop(true, true);
+            $("#result_left").animate({
+                    left:0+'px'
+                },1000,function(){
+                $("#result_left").show();
+            });
+        }
+    </script>
+
 </body>
+
 </html>
