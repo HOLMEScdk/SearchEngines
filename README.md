@@ -1,18 +1,18 @@
 ﻿# Final Presentation 
  ### 1.  Architecture Overview 
-![1]($res/1.png)
+![1](SearchEngines/img/1.png)
 ### 2.  Basic Distributed Structure
-![2]($res/2.png)
+![2](SearchEngines/img/2.png)
 ### 3. Ranking
-![3]($res/3.png)
+![3](SearchEngines/img/3.png)
 ### 4. Figure Relationship Diagram
- ![4]($res/4.png)
+ ![4](SearchEngines/img/4.png)
 ### 5. Search Function
-![6]($res/6.png)
-![8]($res/8.png)
+![6](SearchEngines/img/6.png)
+![8](SearchEngines/img/8.png)
 ### 6. Database 
 
-![7]($res/7.png)
+![7](SearchEngines/img/7.png)
 
 
 # SearchEngines
