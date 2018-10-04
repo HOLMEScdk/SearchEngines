@@ -1,18 +1,18 @@
 ﻿# Final Presentation 
  ### 1.  Architecture Overview 
-![1](SearchEngines/img/1.png)
+![1](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/1.png)
 ### 2.  Basic Distributed Structure
-![2](SearchEngines/img/2.png)
+![2](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/2.png)
 ### 3. Ranking
-![3](SearchEngines/img/3.png)
+![3](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/3.png)
 ### 4. Figure Relationship Diagram
- ![4](SearchEngines/img/4.png)
+ ![4](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/4.png)
 ### 5. Search Function
-![6](SearchEngines/img/6.png)
-![8](SearchEngines/img/8.png)
+![6](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/6.png)
+![8](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/8.png)
 ### 6. Database 
 
-![7](SearchEngines/img/7.png)
+![7](https://github.com/HOLMEScdk/SearchEngines/raw/master/img/7.png)
 
 
 # SearchEngines
