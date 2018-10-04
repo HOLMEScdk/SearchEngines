@@ -1,8 +1,28 @@
-﻿# SearchEngines
+﻿# Final Presentation 
+ ### 1.  Architecture Overview 
+![1]($res/1.png)
+### 2.  Basic Distributed Structure
+![2]($res/2.png)
+### 3. Ranking
+![3]($res/3.png)
+### 4. Figure Relationship Diagram
+ ![4]($res/4.png)
+### 5. Search Function
+![6]($res/6.png)
+![8]($res/8.png)
+### 6. Database 
+
+![7]($res/7.png)
+
+
+# SearchEngines
+
 
 
 
 Contains Crawler，Indexing，  Word Segmentation，Distributed System 
+
+
 
 
 
@@ -11,6 +31,7 @@ Contains Crawler，Indexing，  Word Segmentation，Distributed System
 # 爬虫部分
 ## 主题： 知乎个人用户信息抓取
 ### 基本信息
+
 参考界面信息：https://www.zhihu.com/people/gashero/answers
 工具及环境： Redis + MongoDB + Anaconda （最新版)
 需要知识： 基本网页知识，线程通信，爬虫及反爬虫（我也就看了两天书就xjb上了），数据库，一丢丢数据结构，正则表达式，进程线程（操作系统上的概念实现），字符编码格式（虽然python3都是unicode 但是还是遇到了莫名其妙的问题在用上述东西的时候）
